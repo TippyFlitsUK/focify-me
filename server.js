@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { join, extname } from "node:path";
 import { createReadStream } from "node:fs";
 import { createInterface } from "node:readline";
+import { randomUUID } from "node:crypto";
 
 const PORT = process.env.PORT || 8090;
 const app = express();
@@ -79,7 +80,6 @@ function parseLine(raw) {
   if (line.startsWith("┃")) {
     const inner = line.slice(1).trim();
     if (!inner) return null;
-    // Re-run through the same parsing logic on the inner content
     if (inner.startsWith("✔") || inner.startsWith("✓")) {
       return { type: "success", text: inner.slice(1).trim() };
     }
@@ -107,14 +107,61 @@ function parseLine(raw) {
   return { type: "info", text: line };
 }
 
+// ── Job store ──
+// Each job stores all events with incrementing IDs for SSE replay on reconnect.
+const jobs = new Map();
+const JOB_TTL = 10 * 60_000; // Clean up jobs after 10 minutes
+
+function createJob(input) {
+  const id = randomUUID();
+  const job = {
+    id,
+    input,
+    events: [],      // { id: number, data: object }
+    nextEventId: 1,
+    finished: false,
+    clients: new Set(),
+    child: null,
+    keepalive: null,
+    createdAt: Date.now(),
+  };
+  jobs.set(id, job);
+  return job;
+}
+
+function addEvent(job, data) {
+  const eventId = job.nextEventId++;
+  job.events.push({ id: eventId, data });
+  // Send to all connected clients
+  for (const res of job.clients) {
+    writeSSE(res, eventId, data);
+  }
+}
+
+function writeSSE(res, id, data) {
+  res.write(`id: ${id}\ndata: ${JSON.stringify(data)}\n\n`);
+}
+
+function finishJob(job) {
+  job.finished = true;
+  clearInterval(job.keepalive);
+  // Close all client connections
+  for (const res of job.clients) {
+    res.end();
+  }
+  job.clients.clear();
+  // Clean up after TTL
+  setTimeout(() => jobs.delete(job.id), JOB_TTL);
+}
+
 // Active jobs (limit concurrency)
 let activeJobs = 0;
 const MAX_JOBS = 3;
 
-// SSE endpoint: start a demo job
-app.get("/api/demo/stream", (req, res) => {
-  const url = req.query.url;
-  const filePath = req.query.file;
+// ── Start a job ──
+app.post("/api/demo/start", (req, res) => {
+  const url = req.body.url;
+  const filePath = req.body.file;
   const input = url || filePath;
 
   if (!input) {
@@ -127,7 +174,6 @@ app.get("/api/demo/stream", (req, res) => {
     return;
   }
 
-  // Basic URL validation
   if (url) {
     try {
       const normalized = url.startsWith("http") ? url : `https://${url}`;
@@ -139,28 +185,18 @@ app.get("/api/demo/stream", (req, res) => {
   }
 
   activeJobs++;
+  const job = createJob(input);
 
-  // SSE headers
-  res.writeHead(200, {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive",
-    "X-Accel-Buffering": "no",
-  });
+  addEvent(job, { type: "info", text: `Starting demo for ${input}...` });
 
-  function sendEvent(data) {
-    res.write(`data: ${JSON.stringify(data)}\n\n`);
-  }
-
-  // Keep connection alive during long crawls (Cloudflare times out idle connections at 100s)
-  const keepalive = setInterval(() => {
-    res.write(": keepalive\n\n");
+  // Keep connection alive during long crawls
+  job.keepalive = setInterval(() => {
+    for (const client of job.clients) {
+      client.write(": keepalive\n\n");
+    }
   }, 30_000);
 
-  sendEvent({ type: "info", text: `Starting demo for ${input}...` });
-
   // Spawn nova demo
-  // NOVA_CLI env var overrides npx (for local builds before npm publish)
   const novaCli = process.env.NOVA_CLI;
   const args = ["demo", input, "--json", "--provider-id", "9", "--max-pages", "100"];
   const spawnOpts = { env: { ...process.env, FORCE_COLOR: "0" }, stdio: ["ignore", "pipe", "pipe"] };
@@ -168,19 +204,17 @@ app.get("/api/demo/stream", (req, res) => {
     ? spawn("node", [novaCli, ...args], spawnOpts)
     : spawn("npx", ["-y", "--package", "filecoin-nova", "nova", ...args], spawnOpts);
 
+  job.child = child;
   let stdoutBuf = "";
 
-  // With --json, Nova redirects progress to stderr and writes JSON result to stdout.
-  // Stream stderr progress as SSE events.
   const rl = createInterface({ input: child.stderr });
   rl.on("line", (raw) => {
     const event = parseLine(raw);
     if (event) {
-      sendEvent(event);
+      addEvent(job, event);
     }
   });
 
-  // Collect stdout (JSON result only)
   child.stdout.on("data", (chunk) => {
     stdoutBuf += chunk.toString();
   });
@@ -190,33 +224,29 @@ app.get("/api/demo/stream", (req, res) => {
 
     let directory;
     if (code === 0) {
-      // Try to parse JSON result captured from stdout
       try {
         const result = JSON.parse(stdoutBuf.trim());
         directory = result.directory;
-        sendEvent({ type: "complete", ...result });
+        addEvent(job, { type: "complete", ...result });
       } catch {
-        // If no JSON, extract CID from output
         const cidMatch = stdoutBuf.match(/baf[a-z0-9]{50,}/);
         if (cidMatch) {
-          sendEvent({
+          addEvent(job, {
             type: "complete",
             cid: cidMatch[0],
             gatewayUrl: `https://${cidMatch[0]}.ipfs.dweb.link/`,
           });
         } else {
-          sendEvent({ type: "error", text: "Deploy finished but no CID found in output" });
+          addEvent(job, { type: "error", text: "Deploy finished but no CID found in output" });
         }
       }
     } else {
-      sendEvent({ type: "error", text: `Deploy failed (exit code ${code})` });
+      addEvent(job, { type: "error", text: `Deploy failed (exit code ${code})` });
     }
 
-    clearInterval(keepalive);
-    sendEvent({ type: "done" });
-    res.end();
+    addEvent(job, { type: "done" });
+    finishJob(job);
 
-    // Clean up cloned directory
     if (directory) {
       rm(directory, { recursive: true, force: true }).catch(() => {});
     }
@@ -224,23 +254,58 @@ app.get("/api/demo/stream", (req, res) => {
 
   child.on("error", (err) => {
     activeJobs--;
-    clearInterval(keepalive);
-    sendEvent({ type: "error", text: err.message });
-    sendEvent({ type: "done" });
-    res.end();
+    addEvent(job, { type: "error", text: err.message });
+    addEvent(job, { type: "done" });
+    finishJob(job);
   });
 
-  // Clean up if client disconnects
-  req.on("close", () => {
-    clearInterval(keepalive);
-    if (!child.killed) {
-      child.kill("SIGTERM");
-      activeJobs--;
+  res.json({ jobId: job.id });
+});
+
+// ── Stream events for a job (supports reconnect via Last-Event-ID) ──
+app.get("/api/demo/stream/:jobId", (req, res) => {
+  const job = jobs.get(req.params.jobId);
+  if (!job) {
+    res.status(404).json({ error: "Job not found" });
+    return;
+  }
+
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+    "X-Accel-Buffering": "no",
+  });
+
+  // Replay missed events
+  const lastId = parseInt(req.headers["last-event-id"] || "0", 10);
+  for (const evt of job.events) {
+    if (evt.id > lastId) {
+      writeSSE(res, evt.id, evt.data);
     }
+  }
+
+  // If job already finished, close immediately after replay
+  if (job.finished) {
+    res.end();
+    return;
+  }
+
+  // Register for future events
+  job.clients.add(res);
+
+  req.on("close", () => {
+    job.clients.delete(res);
+    // Don't kill the child -- job continues in background for reconnect
   });
 });
 
-// File upload endpoint -- saves archive, returns temp path
+// ── Legacy GET endpoint (redirect to new flow) ──
+app.get("/api/demo/stream", (req, res) => {
+  res.status(410).json({ error: "Use POST /api/demo/start then GET /api/demo/stream/:jobId" });
+});
+
+// File upload endpoint
 app.post("/api/upload", upload.single("archive"), (req, res) => {
   if (!req.file) {
     res.status(400).json({ error: "No file uploaded" });
@@ -249,6 +314,19 @@ app.post("/api/upload", upload.single("archive"), (req, res) => {
   res.json({ path: req.file.path, originalName: req.file.originalname });
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`FOCify.ME server running on port ${PORT}`);
+});
+
+// Graceful shutdown: stop accepting new connections, wait for in-flight jobs to finish
+process.on("SIGTERM", () => {
+  console.log("SIGTERM received -- draining in-flight jobs...");
+  server.close();
+  const check = setInterval(() => {
+    if (activeJobs === 0) {
+      clearInterval(check);
+      console.log("All jobs drained, exiting.");
+      process.exit(0);
+    }
+  }, 1000);
 });

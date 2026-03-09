@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FOCify.ME - ENS Domain Setup</title>
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--blue:#2563EB;--light-blue:#38BDF8;--dark-blue:#1E3A8A;--dark:#0F172A;--secondary:#6B7280;--bg:#ffffff;--card-bg:#F8FAFC;--border:#E2E8F0;--success:#10B981;--error:#EF4444;--radius:12px}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--dark);background:var(--bg);min-height:100vh;display:flex;flex-direction:column;align-items:center}
+h1,h2,h3{font-family:'Sora','Inter',system-ui,sans-serif}
+.container{max-width:640px;width:100%;padding:0 24px}
+header{width:100%;padding:32px 0 0;text-align:center}
+header img{width:400px;max-width:90%;height:auto;margin-bottom:24px}
+h1{font-size:28px;font-weight:700;color:var(--dark);margin-bottom:8px}
+.tagline{color:var(--secondary);font-size:16px;margin-bottom:40px}
+.card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:32px;margin-bottom:24px}
+.card h2{font-size:18px;font-weight:600;margin-bottom:16px}
+.card p{color:var(--secondary);font-size:14px;line-height:1.6;margin-bottom:16px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:13px;font-weight:500;color:var(--secondary);margin-bottom:6px}
+.field input,.field select{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:monospace;background:var(--bg);color:var(--dark)}
+.field select{font-family:'Inter',system-ui,sans-serif}
+.field input:focus,.field select:focus{outline:none;border-color:var(--blue)}
+.field input:read-only{background:#f1f5f9;color:var(--secondary)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 28px;border-radius:var(--radius);border:none;font-size:15px;font-weight:600;cursor:pointer;transition:all .15s;width:100%}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:#1D4ED8}
+.btn-primary:disabled{background:var(--border);color:var(--secondary);cursor:not-allowed}
+.status{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;padding:10px 14px;border-radius:8px}
+.status.success{background:#ecfdf5;color:#065f46}
+.status.error{background:#fef2f2;color:#991b1b}
+.status.pending{background:#fefce8;color:#854d0e}
+.hidden{display:none}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
+.dot.green{background:var(--success)}.dot.red{background:var(--error)}.dot.orange{background:#f59e0b}
+.dot.pulse{animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.steps{display:flex;flex-direction:column;gap:12px}
+.step{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--secondary)}
+.step.active{color:var(--dark);font-weight:500}
+.step.done{color:var(--success)}
+.step-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;background:var(--border);color:var(--secondary);flex-shrink:0}
+.step.active .step-num{background:var(--blue);color:#fff}
+.step.done .step-num{background:var(--success);color:#fff}
+.info-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;font-size:13px;color:#1e40af;margin-bottom:16px}
+.price-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin-bottom:16px}
+.price-box .price-label{font-size:13px;color:#166534;margin-bottom:4px}
+.price-box .price-value{font-size:24px;font-weight:700;color:#166534}
+.price-box .price-detail{font-size:12px;color:#15803d;margin-top:4px}
+.countdown{font-size:32px;font-weight:700;color:var(--blue);text-align:center;padding:24px 0;font-variant-numeric:tabular-nums}
+.countdown-label{font-size:13px;color:var(--secondary);text-align:center;margin-bottom:8px}
+footer{margin-top:auto;padding:32px 0;text-align:center;font-size:13px;color:var(--secondary)}
+footer a{color:var(--blue);text-decoration:none}
+</style>
+</head>
+<body>
+<header>
+<img src="focify.png" alt="FOCify" style="width:400px;max-width:90%;height:auto">
+<h1>ENS Domain Setup</h1>
+<p class="tagline">Register a new domain or update an existing one -- sign with your Ethereum wallet.</p>
+</header>
+
+<div class="container">
+  <div class="card">
+    <h2>Details</h2>
+    <div class="field">
+      <label>ENS Domain</label>
+      <input type="text" id="ensName" placeholder="mysite.eth">
+    </div>
+    <div class="field">
+      <label>IPFS CID</label>
+      <input type="text" id="ipfsCid" placeholder="bafybei...">
+    </div>
+    <div class="info-box" id="infoBox" style="display:none"></div>
+  </div>
+
+  <div class="card" id="steps-card">
+    <h2>Steps</h2>
+    <div class="steps" id="stepsContainer">
+      <div class="step" id="step1"><span class="step-num">1</span> Connect your Ethereum wallet</div>
+      <div class="step" id="step2"><span class="step-num">2</span> <span id="step2text">Check domain availability</span></div>
+      <div class="step" id="step3"><span class="step-num">3</span> <span id="step3text">Sign transaction</span></div>
+      <div class="step" id="step4" class="hidden"><span class="step-num">4</span> <span id="step4text">Done</span></div>
+    </div>
+  </div>
+
+  <div id="connect-section">
+    <button class="btn btn-primary" id="connectBtn" onclick="connectWallet()">Connect Wallet</button>
+    <div id="connectStatus"></div>
+  </div>
+
+  <div id="register-section" class="hidden">
+    <div class="card">
+      <h2>Domain Available</h2>
+      <p id="registerInfo"></p>
+      <div class="price-box">
+        <div class="price-label">Registration cost</div>
+        <div class="price-value" id="registerPrice"></div>
+        <div class="price-detail" id="registerPriceDetail"></div>
+      </div>
+      <div class="field">
+        <label>Registration Duration</label>
+        <select id="regDuration" onchange="updatePrice()">
+          <option value="31536000" selected>1 year</option>
+          <option value="63072000">2 years</option>
+          <option value="94608000">3 years</option>
+          <option value="157680000">5 years</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="commitBtn" onclick="startRegistration()">Register Domain</button>
+    <div id="registerStatus"></div>
+  </div>
+
+  <div id="countdown-section" class="hidden">
+    <div class="card">
+      <h2>Waiting for commit to mature</h2>
+      <p>ENS requires a 60-second wait between commit and registration to prevent front-running.</p>
+      <div class="countdown-label">Time remaining</div>
+      <div class="countdown" id="countdown">60</div>
+    </div>
+    <div id="countdownStatus"></div>
+  </div>
+
+  <div id="sign-section" class="hidden">
+    <div style="margin-bottom:16px">
+      <p style="font-size:14px;color:var(--secondary)">Connected as</p>
+      <p style="font-family:monospace;font-size:13px;word-break:break-all" id="walletAddr"></p>
+    </div>
+    <button class="btn btn-primary" id="signBtn" onclick="signUpdate()">Update ENS Contenthash</button>
+    <div id="signStatus"></div>
+  </div>
+
+  <div id="result-section" class="hidden">
+    <div class="card" style="border-color:var(--success)">
+      <h2 style="color:var(--success)" id="resultTitle">ENS Updated</h2>
+      <p id="resultDesc">Your ENS domain now points to your IPFS site. It may take a few minutes for gateways to pick up the change.</p>
+      <div class="field">
+        <label>Transaction</label>
+        <input type="text" id="outTxHash" readonly>
+      </div>
+      <div class="field">
+        <label>Gateway URL</label>
+        <input type="text" id="outGateway" readonly>
+      </div>
+      <div class="status success">
+        <span class="dot green"></span>
+        Visit your site at <a id="outLink" href="#" target="_blank"></a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>Built for &amp; powered by <a href="https://filecoin.cloud" target="_blank">Filecoin Onchain Cloud</a></p>
+</footer>
+
+<script>
+// --- Constants ---
+const ENS_REGISTRY = '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e';
+const PUBLIC_RESOLVER = '0x231b0Ee14048e9dCcD1d247744d114a4EB5E8E63';
+const ETH_REGISTRAR = '0x253553366Da8546fC250F225fe3d25d0C782303b';
+
+const RESOLVER_ABI = [
+  'function setContenthash(bytes32 node, bytes calldata hash) external',
+  'function contenthash(bytes32 node) external view returns (bytes)'
+];
+const REGISTRY_ABI = [
+  'function resolver(bytes32 node) external view returns (address)',
+  'function owner(bytes32 node) external view returns (address)',
+  'function setSubnodeRecord(bytes32 node, bytes32 label, address owner, address resolver, uint64 ttl) external'
+];
+const REGISTRAR_ABI = [
+  'function available(string name) external view returns (bool)',
+  'function rentPrice(string name, uint256 duration) external view returns (tuple(uint256 base, uint256 premium))',
+  'function makeCommitment(string name, address owner, uint256 duration, bytes32 secret, address resolver, bytes[] calldata data, bool reverseRecord, uint16 ownerControlledFuses) external view returns (bytes32)',
+  'function commit(bytes32 commitment) external',
+  'function register(string name, address owner, uint256 duration, bytes32 secret, address resolver, bytes[] calldata data, bool reverseRecord, uint16 ownerControlledFuses) external payable'
+];
+const NAME_WRAPPER = '0xD4416b13d2b3a9aBae7AcD5D6C2BbDBE25686401';
+const NAME_WRAPPER_ABI = [
+  'function ownerOf(uint256 id) external view returns (address)',
+  'function setSubnodeRecord(bytes32 parentNode, string calldata label, address owner, address resolver, uint64 ttl, uint32 fuses, uint64 expiry) external returns (bytes32)'
+];
+
+let walletAddress = null;
+let registrationSecret = null;
+let registrationMode = null; // 'register', 'update', 'subdomain'
+let cachedPrice = null;
+
+// --- Read URL params ---
+(function() {
+  const params = new URLSearchParams(location.search);
+  if (params.get('name')) document.getElementById('ensName').value = params.get('name');
+  if (params.get('cid')) document.getElementById('ipfsCid').value = params.get('cid');
+})();
+
+// --- Base32 CID decoding (RFC 4648 lowercase, no padding) ---
+function base32Decode(input) {
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz234567';
+  let bits = 0, value = 0, output = [];
+  for (let i = 0; i < input.length; i++) {
+    const idx = alphabet.indexOf(input[i]);
+    if (idx === -1) continue;
+    value = (value << 5) | idx;
+    bits += 5;
+    if (bits >= 8) {
+      output.push((value >>> (bits - 8)) & 0xff);
+      bits -= 8;
+    }
+  }
+  return new Uint8Array(output);
+}
+
+// --- Base58 CID decoding (Bitcoin alphabet) ---
+function base58Decode(input) {
+  const alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+  let result = [0];
+  for (let i = 0; i < input.length; i++) {
+    const idx = alphabet.indexOf(input[i]);
+    if (idx === -1) throw new Error('Invalid base58 character: ' + input[i]);
+    let carry = idx;
+    for (let j = 0; j < result.length; j++) {
+      carry += result[j] * 58;
+      result[j] = carry & 0xff;
+      carry >>= 8;
+    }
+    while (carry > 0) {
+      result.push(carry & 0xff);
+      carry >>= 8;
+    }
+  }
+  for (let i = 0; i < input.length && input[i] === '1'; i++) {
+    result.push(0);
+  }
+  return new Uint8Array(result.reverse());
+}
+
+function encodeIpfsContenthash(cidStr) {
+  let cidBytes;
+  if (cidStr.startsWith('bafy') || cidStr.startsWith('bafk')) {
+    cidBytes = base32Decode(cidStr.slice(1));
+  } else if (cidStr.startsWith('Qm')) {
+    const decoded = base58Decode(cidStr);
+    const v1 = new Uint8Array(2 + decoded.length);
+    v1[0] = 0x01;
+    v1[1] = 0x70;
+    v1.set(decoded, 2);
+    cidBytes = v1;
+  } else {
+    throw new Error('Unsupported CID format. Expected bafybei... (CIDv1) or Qm... (CIDv0)');
+  }
+  const encoded = new Uint8Array(2 + cidBytes.length);
+  encoded[0] = 0xe3;
+  encoded[1] = 0x01;
+  encoded.set(cidBytes, 2);
+  return '0x' + Array.from(encoded).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// --- UI helpers ---
+function setSteps(steps, current) {
+  const container = document.getElementById('stepsContainer');
+  container.innerHTML = '';
+  for (let i = 0; i < steps.length; i++) {
+    const div = document.createElement('div');
+    div.className = 'step';
+    if (i + 1 < current) div.classList.add('done');
+    else if (i + 1 === current) div.classList.add('active');
+    div.innerHTML = '<span class="step-num">' + (i + 1) + '</span> ' + steps[i];
+    container.appendChild(div);
+  }
+}
+
+function showStatus(containerId, type, msg) {
+  const dotClass = type === 'success' ? 'green' : type === 'error' ? 'red' : 'orange pulse';
+  const container = document.getElementById(containerId);
+  container.textContent = '';
+  const div = document.createElement('div');
+  div.className = 'status ' + type;
+  const dot = document.createElement('span');
+  dot.className = 'dot ' + dotClass;
+  div.appendChild(dot);
+  div.appendChild(document.createTextNode(msg));
+  container.appendChild(div);
+}
+
+function isSubdomain(name) { return name.split('.').length > 2; }
+function getLabel(name) { return name.split('.')[0]; }
+
+setSteps(['Connect your Ethereum wallet', 'Check domain availability', 'Sign transaction', 'Done'], 1);
+
+// --- Load ethers.js ---
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (window._ethersLoaded) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = () => { window._ethersLoaded = true; resolve(); };
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+// --- Wallet connection + availability check ---
+async function connectWallet() {
+  const btn = document.getElementById('connectBtn');
+  btn.disabled = true;
+  btn.textContent = 'Connecting...';
+
+  try {
+    if (!window.ethereum) {
+      showStatus('connectStatus', 'error', 'MetaMask not found. Please install MetaMask.');
+      btn.disabled = false;
+      btn.textContent = 'Connect Wallet';
+      return;
+    }
+
+    // Validate inputs first
+    const ensName = document.getElementById('ensName').value.trim();
+    const ipfsCid = document.getElementById('ipfsCid').value.trim();
+    if (!ensName || !ensName.endsWith('.eth')) {
+      showStatus('connectStatus', 'error', 'Enter a valid ENS domain (e.g. mysite.eth)');
+      btn.disabled = false;
+      btn.textContent = 'Connect Wallet';
+      return;
+    }
+    if (!ipfsCid) {
+      showStatus('connectStatus', 'error', 'Enter an IPFS CID');
+      btn.disabled = false;
+      btn.textContent = 'Connect Wallet';
+      return;
+    }
+
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    walletAddress = accounts[0];
+
+    // Switch to Ethereum mainnet
+    try {
+      await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x1' }] });
+    } catch (switchErr) {
+      showStatus('connectStatus', 'error', 'Please switch to Ethereum mainnet in your wallet.');
+      btn.disabled = false;
+      btn.textContent = 'Connect Wallet';
+      return;
+    }
+
+    await loadScript('https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js');
+
+    showStatus('connectStatus', 'pending', 'Checking domain status...');
+
+    const provider = new ethers.BrowserProvider(window.ethereum);
+
+    if (isSubdomain(ensName)) {
+      // Subdomain -- go straight to update flow
+      registrationMode = 'subdomain';
+      setSteps(['Connect wallet', 'Create subdomain (if needed)', 'Set contenthash', 'Done'], 2);
+      document.getElementById('walletAddr').textContent = walletAddress;
+      document.getElementById('connect-section').classList.add('hidden');
+      document.getElementById('sign-section').classList.remove('hidden');
+      document.getElementById('signBtn').textContent = 'Set Up Subdomain';
+      return;
+    }
+
+    // Top-level .eth -- check availability
+    const registrar = new ethers.Contract(ETH_REGISTRAR, REGISTRAR_ABI, provider);
+    const label = getLabel(ensName);
+    const isAvailable = await registrar.available(label);
+
+    if (isAvailable) {
+      // Domain is available -- show registration flow
+      registrationMode = 'register';
+      setSteps(['Connect wallet', 'Register domain (commit)', 'Wait 60 seconds', 'Complete registration + set contenthash', 'Done'], 2);
+
+      // Get price for default duration
+      await updatePrice();
+
+      document.getElementById('registerInfo').textContent =
+        ensName + ' is available for registration. The contenthash will be set to your IPFS CID automatically.';
+
+      document.getElementById('connect-section').classList.add('hidden');
+      document.getElementById('register-section').classList.remove('hidden');
+    } else {
+      // Domain exists -- check if user owns it
+      registrationMode = 'update';
+      const registry = new ethers.Contract(ENS_REGISTRY, REGISTRY_ABI, provider);
+      const node = ethers.namehash(ensName);
+      const owner = await registry.owner(node);
+      const isWrapped = owner.toLowerCase() === NAME_WRAPPER.toLowerCase();
+
+      let actualOwner = owner;
+      if (isWrapped) {
+        try {
+          const nameWrapper = new ethers.Contract(NAME_WRAPPER, NAME_WRAPPER_ABI, provider);
+          actualOwner = await nameWrapper.ownerOf(node);
+        } catch {}
+      }
+
+      if (actualOwner.toLowerCase() !== walletAddress.toLowerCase()) {
+        showStatus('connectStatus', 'error',
+          ensName + ' is already registered and owned by ' + actualOwner.slice(0, 8) + '...' + actualOwner.slice(-4) + '. You cannot update it.');
+        btn.disabled = false;
+        btn.textContent = 'Connect Wallet';
+        return;
+      }
+
+      // User owns it -- update contenthash
+      setSteps(['Connect wallet', 'Update contenthash', 'Done'], 2);
+      document.getElementById('walletAddr').textContent = walletAddress;
+      document.getElementById('connect-section').classList.add('hidden');
+      document.getElementById('sign-section').classList.remove('hidden');
+      document.getElementById('signBtn').textContent = 'Update ENS Contenthash';
+    }
+
+  } catch (err) {
+    showStatus('connectStatus', 'error', err.message || 'Failed to connect wallet');
+    btn.disabled = false;
+    btn.textContent = 'Connect Wallet';
+  }
+}
+
+// --- Price display ---
+async function updatePrice() {
+  const ensName = document.getElementById('ensName').value.trim();
+  const label = getLabel(ensName);
+  const duration = parseInt(document.getElementById('regDuration').value);
+
+  const provider = new ethers.BrowserProvider(window.ethereum);
+  const registrar = new ethers.Contract(ETH_REGISTRAR, REGISTRAR_ABI, provider);
+  const price = await registrar.rentPrice(label, duration);
+  const totalWei = price.base + price.premium;
+  cachedPrice = totalWei;
+
+  const ethPrice = ethers.formatEther(totalWei);
+  const years = duration / 31536000;
+  document.getElementById('registerPrice').textContent = parseFloat(ethPrice).toFixed(4) + ' ETH';
+  document.getElementById('registerPriceDetail').textContent =
+    years + ' year' + (years > 1 ? 's' : '') + ' registration' +
+    (price.premium > 0n ? ' (includes premium)' : '');
+}
+
+// --- Registration flow (commit-reveal) ---
+async function startRegistration() {
+  const btn = document.getElementById('commitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Sending commit...';
+
+  try {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const registrar = new ethers.Contract(ETH_REGISTRAR, REGISTRAR_ABI, signer);
+
+    const ensName = document.getElementById('ensName').value.trim();
+    const ipfsCid = document.getElementById('ipfsCid').value.trim();
+    const label = getLabel(ensName);
+    const duration = parseInt(document.getElementById('regDuration').value);
+
+    // Generate random secret
+    registrationSecret = ethers.hexlify(ethers.randomBytes(32));
+
+    // Encode contenthash to set during registration
+    const contenthash = encodeIpfsContenthash(ipfsCid);
+    const node = ethers.namehash(ensName);
+    const resolverIface = new ethers.Interface(RESOLVER_ABI);
+    const setContenthashData = resolverIface.encodeFunctionData('setContenthash', [node, contenthash]);
+
+    // Make commitment
+    const commitment = await registrar.makeCommitment(
+      label, walletAddress, duration, registrationSecret,
+      PUBLIC_RESOLVER, [setContenthashData], false, 0
+    );
+
+    showStatus('registerStatus', 'pending', 'Confirm the commit transaction in your wallet...');
+    setSteps(['Connect wallet', 'Register domain (commit)', 'Wait 60 seconds', 'Complete registration + set contenthash', 'Done'], 2);
+
+    const commitTx = await registrar.commit(commitment);
+    showStatus('registerStatus', 'pending', 'Waiting for commit confirmation... (tx: ' + commitTx.hash.slice(0, 10) + '...)');
+    await commitTx.wait();
+
+    // Commit confirmed -- start countdown
+    setSteps(['Connect wallet', 'Register domain (commit)', 'Wait 60 seconds', 'Complete registration + set contenthash', 'Done'], 3);
+    document.getElementById('register-section').classList.add('hidden');
+    document.getElementById('countdown-section').classList.remove('hidden');
+
+    let remaining = 65; // 60s + 5s buffer
+    const countdownEl = document.getElementById('countdown');
+    const countdownInterval = setInterval(() => {
+      remaining--;
+      countdownEl.textContent = remaining;
+      if (remaining <= 0) {
+        clearInterval(countdownInterval);
+        completeRegistration();
+      }
+    }, 1000);
+
+  } catch (err) {
+    showStatus('registerStatus', 'error', err.message || 'Commit failed');
+    btn.disabled = false;
+    btn.textContent = 'Register Domain';
+  }
+}
+
+async function completeRegistration() {
+  showStatus('countdownStatus', 'pending', 'Confirm the registration transaction in your wallet...');
+  setSteps(['Connect wallet', 'Register domain (commit)', 'Wait 60 seconds', 'Complete registration + set contenthash', 'Done'], 4);
+
+  try {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const registrar = new ethers.Contract(ETH_REGISTRAR, REGISTRAR_ABI, signer);
+
+    const ensName = document.getElementById('ensName').value.trim();
+    const ipfsCid = document.getElementById('ipfsCid').value.trim();
+    const label = getLabel(ensName);
+    const duration = parseInt(document.getElementById('regDuration').value);
+
+    // Re-encode contenthash data
+    const contenthash = encodeIpfsContenthash(ipfsCid);
+    const node = ethers.namehash(ensName);
+    const resolverIface = new ethers.Interface(RESOLVER_ABI);
+    const setContenthashData = resolverIface.encodeFunctionData('setContenthash', [node, contenthash]);
+
+    // Re-fetch price (may have changed slightly)
+    const price = await registrar.rentPrice(label, duration);
+    const totalWei = price.base + price.premium;
+    // Add 5% buffer for price fluctuation
+    const value = totalWei + (totalWei * 5n / 100n);
+
+    showStatus('countdownStatus', 'pending', 'Sending registration transaction...');
+
+    const registerTx = await registrar.register(
+      label, walletAddress, duration, registrationSecret,
+      PUBLIC_RESOLVER, [setContenthashData], false, 0,
+      { value }
+    );
+
+    showStatus('countdownStatus', 'pending', 'Waiting for registration confirmation... (tx: ' + registerTx.hash.slice(0, 10) + '...)');
+    await registerTx.wait();
+
+    // Success
+    const ethLimoUrl = ensName + '.limo';
+    setSteps(['Connect wallet', 'Register domain (commit)', 'Wait 60 seconds', 'Complete registration + set contenthash', 'Done'], 6);
+
+    document.getElementById('countdown-section').classList.add('hidden');
+    document.getElementById('result-section').classList.remove('hidden');
+    document.getElementById('resultTitle').textContent = 'Domain Registered';
+    document.getElementById('resultDesc').textContent =
+      ensName + ' is now registered and pointing to your IPFS site. It may take a few minutes for gateways to pick up the change.';
+    document.getElementById('outTxHash').value = registerTx.hash;
+    document.getElementById('outGateway').value = 'https://' + ethLimoUrl;
+    document.getElementById('outLink').href = 'https://' + ethLimoUrl;
+    document.getElementById('outLink').textContent = ethLimoUrl;
+
+  } catch (err) {
+    showStatus('countdownStatus', 'error', err.message || 'Registration failed');
+  }
+}
+
+// --- Subdomain creation ---
+async function ensureSubdomain(ensName, signer, provider) {
+  const registry = new ethers.Contract(ENS_REGISTRY, REGISTRY_ABI, provider);
+  const node = ethers.namehash(ensName);
+  const signerAddr = await signer.getAddress();
+
+  const currentOwner = await registry.owner(node);
+  const currentResolver = await registry.resolver(node);
+  const hasOwner = currentOwner !== ethers.ZeroAddress;
+  const hasResolver = currentResolver !== ethers.ZeroAddress;
+
+  if (hasOwner && hasResolver && currentOwner.toLowerCase() === signerAddr.toLowerCase()) {
+    return;
+  }
+
+  if (hasOwner && currentOwner.toLowerCase() === NAME_WRAPPER.toLowerCase()) {
+    try {
+      const nameWrapper = new ethers.Contract(NAME_WRAPPER, NAME_WRAPPER_ABI, provider);
+      const wrappedOwner = await nameWrapper.ownerOf(node);
+      if (wrappedOwner.toLowerCase() === signerAddr.toLowerCase() && hasResolver) {
+        return;
+      }
+    } catch {}
+  }
+
+  const parts = ensName.split('.');
+  const label = parts[0];
+  const parent = parts.slice(1).join('.');
+  const parentNode = ethers.namehash(parent);
+
+  const parentOwner = await registry.owner(parentNode);
+  const parentIsWrapped = parentOwner.toLowerCase() === NAME_WRAPPER.toLowerCase();
+  let ownsParent = parentOwner.toLowerCase() === signerAddr.toLowerCase();
+
+  if (!ownsParent && parentIsWrapped) {
+    try {
+      const nameWrapper = new ethers.Contract(NAME_WRAPPER, NAME_WRAPPER_ABI, provider);
+      const wrappedParentOwner = await nameWrapper.ownerOf(parentNode);
+      ownsParent = wrappedParentOwner.toLowerCase() === signerAddr.toLowerCase();
+    } catch {}
+  }
+
+  if (!ownsParent) {
+    throw new Error('Your wallet does not own ' + parent + '. Registry owner: ' + parentOwner);
+  }
+
+  showStatus('signStatus', 'pending', 'Creating subdomain ' + label + '.' + parent + '...');
+
+  if (parentIsWrapped) {
+    const nameWrapper = new ethers.Contract(NAME_WRAPPER, NAME_WRAPPER_ABI, signer);
+    const tx = await nameWrapper.setSubnodeRecord(parentNode, label, signerAddr, PUBLIC_RESOLVER, 0, 0, 0);
+    showStatus('signStatus', 'pending', 'Waiting for subdomain creation... (tx: ' + tx.hash.slice(0, 10) + '...)');
+    await tx.wait();
+  } else {
+    const labelHash = ethers.keccak256(ethers.toUtf8Bytes(label));
+    const registryWithSigner = new ethers.Contract(ENS_REGISTRY, REGISTRY_ABI, signer);
+    const tx = await registryWithSigner.setSubnodeRecord(parentNode, labelHash, signerAddr, PUBLIC_RESOLVER, 0);
+    showStatus('signStatus', 'pending', 'Waiting for subdomain creation... (tx: ' + tx.hash.slice(0, 10) + '...)');
+    await tx.wait();
+  }
+}
+
+// --- Update contenthash (existing domain or subdomain) ---
+async function signUpdate() {
+  const btn = document.getElementById('signBtn');
+  btn.disabled = true;
+  btn.textContent = 'Waiting for signature...';
+  showStatus('signStatus', 'pending', 'Please confirm the transaction in your wallet...');
+
+  try {
+    await loadScript('https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js');
+
+    const ensName = document.getElementById('ensName').value.trim();
+    const ipfsCid = document.getElementById('ipfsCid').value.trim();
+
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+
+    if (registrationMode === 'subdomain') {
+      await ensureSubdomain(ensName, signer, provider);
+    }
+
+    const node = ethers.namehash(ensName);
+    const registry = new ethers.Contract(ENS_REGISTRY, REGISTRY_ABI, provider);
+    let resolverAddr = await registry.resolver(node);
+
+    if (!resolverAddr || resolverAddr === ethers.ZeroAddress) {
+      throw new Error('No resolver found for ' + ensName + '. Set one at https://app.ens.domains/' + ensName);
+    }
+
+    const contenthash = encodeIpfsContenthash(ipfsCid);
+
+    const infoBox = document.getElementById('infoBox');
+    infoBox.style.display = 'block';
+    infoBox.textContent = 'Resolver: ' + resolverAddr.slice(0, 10) + '...';
+
+    showStatus('signStatus', 'pending', 'Sending transaction...');
+    const resolver = new ethers.Contract(resolverAddr, RESOLVER_ABI, signer);
+    const tx = await resolver.setContenthash(node, contenthash);
+
+    showStatus('signStatus', 'pending', 'Waiting for confirmation... (tx: ' + tx.hash.slice(0, 10) + '...)');
+    await tx.wait();
+
+    const ethLimoUrl = ensName + '.limo';
+    const totalSteps = registrationMode === 'subdomain' ? 3 : 2;
+    setSteps(
+      registrationMode === 'subdomain'
+        ? ['Connect wallet', 'Create subdomain (if needed)', 'Set contenthash', 'Done']
+        : ['Connect wallet', 'Update contenthash', 'Done'],
+      totalSteps + 1
+    );
+
+    document.getElementById('sign-section').classList.add('hidden');
+    document.getElementById('result-section').classList.remove('hidden');
+    document.getElementById('resultTitle').textContent = registrationMode === 'subdomain' ? 'Subdomain Created' : 'ENS Updated';
+    document.getElementById('outTxHash').value = tx.hash;
+    document.getElementById('outGateway').value = 'https://' + ethLimoUrl;
+    document.getElementById('outLink').href = 'https://' + ethLimoUrl;
+    document.getElementById('outLink').textContent = ethLimoUrl;
+
+  } catch (err) {
+    showStatus('signStatus', 'error', err.message || 'Transaction failed');
+    btn.disabled = false;
+    btn.textContent = registrationMode === 'subdomain' ? 'Set Up Subdomain' : 'Update ENS Contenthash';
+  }
+}
+</script>
+</body>
+</html>

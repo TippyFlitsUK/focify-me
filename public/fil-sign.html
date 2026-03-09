@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FOCify.ME - Sign Filecoin Transaction</title>
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--blue:#2563EB;--light-blue:#38BDF8;--dark-blue:#1E3A8A;--dark:#0F172A;--secondary:#6B7280;--bg:#ffffff;--card-bg:#F8FAFC;--border:#E2E8F0;--success:#10B981;--error:#EF4444;--radius:12px}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--dark);background:var(--bg);min-height:100vh;display:flex;flex-direction:column;align-items:center}
+h1,h2,h3{font-family:'Sora','Inter',system-ui,sans-serif}
+.container{max-width:640px;width:100%;padding:0 24px}
+header{width:100%;padding:32px 0 0;text-align:center}
+header img{width:400px;max-width:90%;height:auto;margin-bottom:24px}
+h1{font-size:28px;font-weight:700;color:var(--dark);margin-bottom:8px}
+.tagline{color:var(--secondary);font-size:16px;margin-bottom:40px}
+.card{background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:32px;margin-bottom:24px}
+.card h2{font-size:18px;font-weight:600;margin-bottom:16px}
+.card p{color:var(--secondary);font-size:14px;line-height:1.6;margin-bottom:16px}
+.network-pills{display:flex;gap:8px;margin-bottom:24px}
+.pill{padding:8px 20px;border-radius:999px;border:1px solid var(--border);background:var(--bg);font-size:14px;font-weight:500;cursor:pointer;transition:all .15s}
+.pill:hover{border-color:var(--blue)}
+.pill.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.detail{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px}
+.detail:last-child{border-bottom:none}
+.detail-label{color:var(--secondary);flex-shrink:0;margin-right:16px}
+.detail-value{font-family:monospace;font-size:13px;word-break:break-all;text-align:right}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 28px;border-radius:var(--radius);border:none;font-size:15px;font-weight:600;cursor:pointer;transition:all .15s;width:100%}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:#1D4ED8}
+.btn-primary:disabled{background:var(--border);color:var(--secondary);cursor:not-allowed}
+.status{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;padding:10px 14px;border-radius:8px}
+.status.success{background:#ecfdf5;color:#065f46}
+.status.error{background:#fef2f2;color:#991b1b}
+.status.pending{background:#fefce8;color:#854d0e}
+.hidden{display:none}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
+.dot.green{background:var(--success)}.dot.red{background:var(--error)}.dot.orange{background:#f59e0b}
+.dot.pulse{animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.steps{display:flex;flex-direction:column;gap:12px}
+.step{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--secondary)}
+.step.active{color:var(--dark);font-weight:500}
+.step.done{color:var(--success)}
+.step-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;background:var(--border);color:var(--secondary);flex-shrink:0}
+.step.active .step-num{background:var(--blue);color:#fff}
+.step.done .step-num{background:var(--success);color:#fff}
+.tx-list{display:flex;flex-direction:column;gap:12px;margin-bottom:16px}
+.tx-item{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px}
+.tx-item h3{font-size:15px;font-weight:600;margin-bottom:8px}
+.tx-item .detail{font-size:13px;padding:6px 0}
+footer{margin-top:auto;padding:32px 0;text-align:center;font-size:13px;color:var(--secondary)}
+footer a{color:var(--blue);text-decoration:none}
+.result-field{margin-bottom:12px}
+.result-field label{display:block;font-size:13px;font-weight:500;color:var(--secondary);margin-bottom:4px}
+.result-field input{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:monospace;background:#f1f5f9;color:var(--secondary)}
+</style>
+</head>
+<body>
+<header>
+<img src="focify.png" alt="FOCify" style="width:400px;max-width:90%;height:auto">
+<h1>Sign Filecoin Transaction</h1>
+<p class="tagline">Authorize a Filecoin transaction with your wallet -- your private key stays in MetaMask.</p>
+</header>
+
+<div class="container">
+  <div class="card" id="txCard">
+    <h2>Transaction Details</h2>
+    <p id="txDescription"></p>
+    <div class="tx-list" id="txList"></div>
+    <div class="network-pills" id="networkPills">
+      <button class="pill" data-chain="314159" onclick="setChain(314159)">Calibration</button>
+      <button class="pill" data-chain="314" onclick="setChain(314)">Mainnet</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Steps</h2>
+    <div class="steps">
+      <div class="step" id="step1"><span class="step-num">1</span> Connect your Filecoin wallet</div>
+      <div class="step" id="step2"><span class="step-num">2</span> Review and sign the transaction(s)</div>
+      <div class="step" id="step3"><span class="step-num">3</span> Transaction confirmed on-chain</div>
+    </div>
+  </div>
+
+  <div id="connect-section">
+    <button class="btn btn-primary" id="connectBtn" onclick="connectWallet()">Connect Wallet</button>
+    <div id="connectStatus"></div>
+  </div>
+
+  <div id="sign-section" class="hidden">
+    <div style="margin-bottom:16px">
+      <p style="font-size:14px;color:var(--secondary)">Connected as</p>
+      <p style="font-family:monospace;font-size:13px;word-break:break-all" id="walletAddr"></p>
+    </div>
+    <button class="btn btn-primary" id="signBtn" onclick="signTransactions()">Sign Transaction</button>
+    <div id="signStatus"></div>
+  </div>
+
+  <div id="result-section" class="hidden">
+    <div class="card" style="border-color:var(--success)">
+      <h2 style="color:var(--success)">Transaction Complete</h2>
+      <div id="resultDetails"></div>
+      <div class="status success" style="margin-top:12px">
+        <span class="dot green"></span>
+        You can close this page and return to FOCify.ME.
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>Built for &amp; powered by <a href="https://filecoin.cloud" target="_blank">Filecoin Onchain Cloud</a></p>
+</footer>
+
+<script>
+// --- Config ---
+const CHAINS = {
+  314: { name: 'Filecoin Mainnet', rpc: 'https://api.node.glif.io/rpc/v1' },
+  314159: { name: 'Calibration Testnet', rpc: 'https://api.calibration.node.glif.io/rpc/v1' }
+};
+
+let chainId = 314;
+let walletAddress = null;
+let transactions = [];
+
+// --- Parse URL params ---
+// Supports two modes:
+// 1. Simple: ?to=0x...&abi=function foo(uint256)&args=["123"]&description=Do something
+// 2. Multi-tx: ?txs=[{to,abi,args,label},...] (JSON-encoded)
+// Common: ?chain=314159&description=...
+(function() {
+  const params = new URLSearchParams(location.search);
+
+  if (params.get('chain')) chainId = parseInt(params.get('chain'));
+
+  const description = params.get('description') || 'Review and sign the transaction below.';
+  document.getElementById('txDescription').textContent = description;
+
+  if (params.get('txs')) {
+    try {
+      transactions = JSON.parse(params.get('txs'));
+    } catch (e) {
+      document.getElementById('txDescription').textContent = 'Error: Invalid transaction data in URL.';
+    }
+  } else if (params.get('to')) {
+    transactions = [{
+      to: params.get('to'),
+      abi: params.get('abi') || '',
+      args: params.get('args') ? JSON.parse(params.get('args')) : [],
+      value: params.get('value') || '0',
+      label: params.get('label') || 'Transaction',
+    }];
+  }
+
+  // Render transaction details
+  function addDetail(parent, label, value) {
+    const div = document.createElement('div');
+    div.className = 'detail';
+    const lbl = document.createElement('span');
+    lbl.className = 'detail-label';
+    lbl.textContent = label;
+    const val = document.createElement('span');
+    val.className = 'detail-value';
+    val.textContent = value;
+    div.appendChild(lbl);
+    div.appendChild(val);
+    parent.appendChild(div);
+  }
+
+  const txList = document.getElementById('txList');
+  if (transactions.length === 0) {
+    const p = document.createElement('p');
+    p.style.color = 'var(--error)';
+    p.textContent = 'No transaction data provided.';
+    txList.appendChild(p);
+    document.getElementById('connectBtn').disabled = true;
+  } else {
+    transactions.forEach((tx, i) => {
+      const item = document.createElement('div');
+      item.className = 'tx-item';
+      const h3 = document.createElement('h3');
+      h3.textContent = tx.label || 'Transaction ' + (i + 1);
+      item.appendChild(h3);
+      addDetail(item, 'Contract', (tx.to || '').slice(0, 10) + '...' + (tx.to || '').slice(-8));
+      if (tx.abi) {
+        const fnName = tx.abi.match(/function\s+(\w+)/)?.[1] || tx.abi;
+        addDetail(item, 'Function', fnName);
+      }
+      if (tx.value && tx.value !== '0') {
+        addDetail(item, 'Value', tx.value + ' FIL');
+      }
+      if (tx.args && tx.args.length > 0) {
+        addDetail(item, 'Args', JSON.stringify(tx.args));
+      }
+      txList.appendChild(item);
+    });
+  }
+})();
+
+// --- UI state ---
+function setChain(id) {
+  chainId = id;
+  document.querySelectorAll('.pill').forEach(p => p.classList.toggle('active', parseInt(p.dataset.chain) === id));
+}
+
+function setStep(n) {
+  for (let i = 1; i <= 3; i++) {
+    const el = document.getElementById('step' + i);
+    el.classList.remove('active', 'done');
+    if (i < n) el.classList.add('done');
+    else if (i === n) el.classList.add('active');
+  }
+}
+
+function showStatus(containerId, type, msg) {
+  const dotClass = type === 'success' ? 'green' : type === 'error' ? 'red' : 'orange pulse';
+  const container = document.getElementById(containerId);
+  container.textContent = '';
+  const div = document.createElement('div');
+  div.className = 'status ' + type;
+  const dot = document.createElement('span');
+  dot.className = 'dot ' + dotClass;
+  div.appendChild(dot);
+  div.appendChild(document.createTextNode(msg));
+  container.appendChild(div);
+}
+
+setChain(chainId);
+setStep(1);
+
+// --- Load ethers.js ---
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (window._ethersLoaded) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = () => { window._ethersLoaded = true; resolve(); };
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+// --- Wallet connection ---
+async function connectWallet() {
+  const btn = document.getElementById('connectBtn');
+  btn.disabled = true;
+  btn.textContent = 'Connecting...';
+
+  try {
+    if (!window.ethereum) {
+      showStatus('connectStatus', 'error', 'MetaMask not found. Please install MetaMask and add the Filecoin network.');
+      btn.disabled = false;
+      btn.textContent = 'Connect Wallet';
+      return;
+    }
+
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    walletAddress = accounts[0];
+
+    // Switch to the correct chain
+    const targetChainHex = '0x' + chainId.toString(16);
+    try {
+      await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: targetChainHex }] });
+    } catch (switchErr) {
+      if (switchErr.code === 4902) {
+        const chain = CHAINS[chainId];
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [{
+            chainId: targetChainHex,
+            chainName: chain.name,
+            nativeCurrency: { name: 'FIL', symbol: 'FIL', decimals: 18 },
+            rpcUrls: [chain.rpc],
+            blockExplorerUrls: [chainId === 314 ? 'https://filfox.info' : 'https://calibration.filscan.io']
+          }]
+        });
+      } else {
+        throw switchErr;
+      }
+    }
+
+    document.getElementById('walletAddr').textContent = walletAddress;
+    document.getElementById('connect-section').classList.add('hidden');
+    document.getElementById('sign-section').classList.remove('hidden');
+    document.getElementById('signBtn').textContent = transactions.length > 1
+      ? 'Sign ' + transactions.length + ' Transactions'
+      : 'Sign Transaction';
+    setStep(2);
+
+  } catch (err) {
+    showStatus('connectStatus', 'error', err.message || 'Failed to connect wallet');
+    btn.disabled = false;
+    btn.textContent = 'Connect Wallet';
+  }
+}
+
+// --- Sign transactions ---
+async function signTransactions() {
+  const btn = document.getElementById('signBtn');
+  btn.disabled = true;
+  btn.textContent = 'Waiting for signature...';
+
+  try {
+    await loadScript('https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js');
+
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+
+    const results = [];
+
+    for (let i = 0; i < transactions.length; i++) {
+      const tx = transactions[i];
+      const label = tx.label || 'Transaction ' + (i + 1);
+
+      if (transactions.length > 1) {
+        showStatus('signStatus', 'pending', 'Signing ' + label + ' (' + (i + 1) + '/' + transactions.length + ')...');
+      } else {
+        showStatus('signStatus', 'pending', 'Please confirm in your wallet...');
+      }
+
+      let txResponse;
+      if (tx.abi) {
+        // Contract call
+        const contract = new ethers.Contract(tx.to, [tx.abi], signer);
+        const fnName = tx.abi.match(/function\s+(\w+)/)?.[1];
+        if (!fnName) throw new Error('Could not parse function name from ABI');
+        const args = tx.args || [];
+        const overrides = {};
+        if (tx.value && tx.value !== '0') {
+          overrides.value = ethers.parseEther(tx.value);
+        }
+        txResponse = await contract[fnName](...args, overrides);
+      } else {
+        // Raw transaction
+        const txReq = { to: tx.to };
+        if (tx.value && tx.value !== '0') txReq.value = ethers.parseEther(tx.value);
+        if (tx.data) txReq.data = tx.data;
+        txResponse = await signer.sendTransaction(txReq);
+      }
+
+      showStatus('signStatus', 'pending', 'Waiting for confirmation... (' + txResponse.hash.slice(0, 10) + '...)');
+      await txResponse.wait();
+      results.push({ label, hash: txResponse.hash });
+    }
+
+    // Show results
+    document.getElementById('sign-section').classList.add('hidden');
+    document.getElementById('result-section').classList.remove('hidden');
+
+    const details = document.getElementById('resultDetails');
+    let html = '';
+    for (const r of results) {
+      const explorer = chainId === 314
+        ? 'https://filfox.info/en/tx/' + r.hash
+        : 'https://calibration.filscan.io/tx/' + r.hash;
+      html += '<div class="result-field"><label>' + r.label + '</label>';
+      html += '<input type="text" value="' + r.hash + '" readonly></div>';
+    }
+    details.innerHTML = html;
+    setStep(3);
+
+  } catch (err) {
+    showStatus('signStatus', 'error', err.message || 'Transaction failed');
+    btn.disabled = false;
+    btn.textContent = transactions.length > 1
+      ? 'Sign ' + transactions.length + ' Transactions'
+      : 'Sign Transaction';
+  }
+}
+</script>
+</body>
+</html>

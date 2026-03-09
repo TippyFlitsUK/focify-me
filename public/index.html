@@ -187,21 +187,27 @@ h1,h2,h3{font-family:'Sora','Inter',system-ui,sans-serif}
 .ens-card h2{font-size:18px;margin-bottom:8px}
 .ens-card .subtitle{color:var(--secondary);font-size:14px;margin-bottom:20px}
 .ens-form{display:flex;gap:10px}
-.ens-input{
+.ens-input,.ens-select{
   flex:1;padding:12px 16px;border:1px solid var(--border);border-radius:var(--radius);
   font-size:14px;font-family:inherit;background:#fff;
 }
-.ens-input:focus{outline:none;border-color:var(--blue)}
+.ens-input:focus,.ens-select:focus{outline:none;border-color:var(--blue)}
 .ens-btn{
   padding:12px 24px;border:none;border-radius:var(--radius);
   background:var(--dark-blue);color:#fff;font-size:14px;font-weight:600;
   cursor:pointer;font-family:inherit;white-space:nowrap;
 }
 .ens-btn:hover{background:#1E3070}
+.ens-btn:disabled{background:var(--border);color:var(--secondary);cursor:not-allowed}
+.ens-price{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin-bottom:16px}
+.ens-price .price-val{font-size:22px;font-weight:700;color:#166534}
+.ens-price .price-detail{font-size:12px;color:#15803d;margin-top:4px}
+.ens-countdown{font-size:28px;font-weight:700;color:var(--blue);text-align:center;padding:16px 0;font-variant-numeric:tabular-nums}
+.ens-countdown-label{font-size:13px;color:var(--secondary);text-align:center;margin-bottom:4px}
 
 /* ── The FOCified ── */
 .focified-section{
-  max-width:1100px;margin:0 auto;padding:64px 24px 0;
+  max-width:1100px;margin:0 auto;padding:64px 24px 64px;
 }
 .focified-section .focified-logo{display:block;margin:0 auto 12px;height:96px}
 .focified-section h2{text-align:center;font-size:24px;margin-bottom:12px}
@@ -312,14 +318,9 @@ footer .links{display:flex;justify-content:center;gap:24px;margin-bottom:12px}
         <button class="copy-btn" onclick="copyText('resultCid')">Copy</button>
       </div>
       <div class="result-row">
-        <span class="result-label">FOC</span>
+        <span class="result-label">URL</span>
         <span class="result-value"><a id="resultUrl" href="#" target="_blank"></a></span>
         <button class="copy-btn" onclick="copyText('resultUrl')">Copy</button>
-      </div>
-      <div class="result-row">
-        <span class="result-label">IPFS</span>
-        <span class="result-value"><a id="resultDwebUrl" href="#" target="_blank"></a></span>
-        <button class="copy-btn" onclick="copyText('resultDwebUrl')">Copy</button>
       </div>
       <a class="visit-btn" id="visitBtn" href="#" target="_blank">Visit your site</a>
     </div>
@@ -327,12 +328,34 @@ footer .links{display:flex;justify-content:center;gap:24px;margin-bottom:12px}
     <!-- ENS -->
     <div class="ens-card">
       <h2>Point an ENS domain</h2>
-      <p class="subtitle">Optional -- give your site a human-readable .eth.limo address</p>
+      <p class="subtitle">Optional -- register a new domain or update an existing one</p>
       <div id="ensInputSection">
         <div class="ens-form">
           <input type="text" class="ens-input" id="ensInput" placeholder="mysite.eth">
           <button class="ens-btn" id="ensConnectBtn" onclick="ensConnect()">Connect Wallet</button>
         </div>
+      </div>
+      <div id="ensRegisterSection" class="hidden">
+        <p style="font-size:14px;font-weight:600;margin-bottom:12px" id="ensRegisterInfo"></p>
+        <div class="ens-price">
+          <div class="price-val" id="ensRegisterPrice"></div>
+          <div class="price-detail" id="ensRegisterPriceDetail"></div>
+        </div>
+        <div style="margin-bottom:16px">
+          <label style="font-size:13px;color:var(--secondary);display:block;margin-bottom:6px">Registration Duration</label>
+          <select class="ens-select" id="ensRegDuration" onchange="ensUpdatePrice()">
+            <option value="31536000" selected>1 year</option>
+            <option value="63072000">2 years</option>
+            <option value="94608000">3 years</option>
+            <option value="157680000">5 years</option>
+          </select>
+        </div>
+        <button class="ens-btn" style="width:100%" id="ensRegisterBtn" onclick="ensStartRegistration()">Register Domain</button>
+      </div>
+      <div id="ensCountdownSection" class="hidden">
+        <p style="font-size:14px;color:var(--secondary);margin-bottom:8px">ENS requires a 60-second wait between commit and registration to prevent front-running.</p>
+        <div class="ens-countdown-label">Time remaining</div>
+        <div class="ens-countdown" id="ensCountdown">60</div>
       </div>
       <div id="ensSignSection" class="hidden">
         <p style="font-size:13px;color:var(--secondary);margin-bottom:12px">Connected as <span id="ensWalletAddr" style="font-family:'JetBrains Mono',monospace;font-size:12px"></span></p>
@@ -340,7 +363,7 @@ footer .links{display:flex;justify-content:center;gap:24px;margin-bottom:12px}
       </div>
       <div id="ensResultSection" class="hidden">
         <div style="background:#ecfdf5;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin-top:12px">
-          <p style="color:#065f46;font-weight:600;margin-bottom:8px">ENS Updated</p>
+          <p style="color:#065f46;font-weight:600;margin-bottom:8px" id="ensResultTitle">ENS Updated</p>
           <p style="font-size:13px;color:#065f46">Your site is now at <a id="ensLimoLink" href="#" target="_blank" style="color:#047857;font-weight:600"></a></p>
           <p style="font-size:12px;color:#6B7280;margin-top:8px;font-family:'JetBrains Mono',monospace;word-break:break-all" id="ensTxHash"></p>
         </div>
@@ -523,11 +546,26 @@ function escapeHtml(s) {
 }
 
 // ── Start demo (URL) ──
-function startDemo(e) {
+async function startDemo(e) {
   e.preventDefault();
   const url = document.getElementById('urlInput').value.trim();
   if (!url) return;
-  runDemo('/api/demo/stream?url=' + encodeURIComponent(url), url);
+  try {
+    const resp = await fetch('/api/demo/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    if (!resp.ok) {
+      const err = await resp.json();
+      alert(err.error || 'Failed to start');
+      return;
+    }
+    const { jobId } = await resp.json();
+    runDemo('/api/demo/stream/' + jobId, url);
+  } catch (err) {
+    alert('Failed to start: ' + err.message);
+  }
 }
 
 // ── Start demo (upload) ──
@@ -555,7 +593,18 @@ async function startUploadDemo() {
     const data = await resp.json();
     removeSpinner();
     addLine('Upload complete', 'success-line');
-    runDemo('/api/demo/stream?file=' + encodeURIComponent(data.path), selectedFile.name);
+    const startResp = await fetch('/api/demo/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file: data.path }),
+    });
+    if (!startResp.ok) {
+      const err = await startResp.json();
+      addLine(err.error || 'Failed to start', 'error-line');
+      return;
+    }
+    const { jobId } = await startResp.json();
+    runDemo('/api/demo/stream/' + jobId, selectedFile.name);
   } catch (err) {
     removeSpinner();
     addLine('Upload failed: ' + err.message, 'error-line');
@@ -643,9 +692,8 @@ function runDemo(sseUrl, displayName) {
         break;
 
       case 'complete':
-        streamFinished = true;
         currentCid = data.cid;
-        const gwUrl = data.gatewayUrl || ('https://' + data.cid + '.ipfs.dweb.link/');
+        const gwUrl = data.dwebUrl || ('https://' + data.cid + '.ipfs.dweb.link/');
 
         addLine('', 'info-line');
         addLine('\u2501\u2501\u2501 Deploy complete \u2501\u2501\u2501', 'success-line');
@@ -663,38 +711,27 @@ function runDemo(sseUrl, displayName) {
         addLine(gwUrl, 'url-text');
 
         // Show result card
-        showResult(data.cid, gwUrl, data.dwebUrl);
+        showResult(data.cid, gwUrl);
         break;
 
       case 'done':
-        streamFinished = true;
         eventSource.close();
         eventSource = null;
         break;
     }
   };
 
-  let streamFinished = false;
-  eventSource.onerror = function() {
-    eventSource.close();
-    eventSource = null;
-    if (!streamFinished) {
-      addLine('Connection lost', 'error-line');
-    }
-  };
+  // Let EventSource auto-reconnect on error -- server replays missed events via Last-Event-ID
+  eventSource.onerror = function() {};
 }
 
 // ── Show result ──
-function showResult(cid, gwUrl, dwebUrl) {
+function showResult(cid, gwUrl) {
   document.getElementById('resultSection').classList.remove('hidden');
   document.getElementById('resultCid').textContent = cid;
   const urlEl = document.getElementById('resultUrl');
   urlEl.textContent = gwUrl;
   urlEl.href = gwUrl;
-  const dwebEl = document.getElementById('resultDwebUrl');
-  dwebUrl = dwebUrl || ('https://' + cid + '.ipfs.dweb.link/');
-  dwebEl.textContent = dwebUrl;
-  dwebEl.href = dwebUrl;
   document.getElementById('visitBtn').href = gwUrl;
 }
 
@@ -712,6 +749,7 @@ function copyText(elId) {
 // ── ENS pointing (inline wallet signing) ──
 const ENS_REGISTRY = '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e';
 const PUBLIC_RESOLVER = '0x231b0Ee14048e9dCcD1d247744d114a4EB5E8E63';
+const ETH_REGISTRAR = '0x253553366Da8546fC250F225fe3d25d0C782303b';
 const RESOLVER_ABI = [
   'function setContenthash(bytes32 node, bytes calldata hash) external',
   'function contenthash(bytes32 node) external view returns (bytes)'
@@ -721,6 +759,13 @@ const REGISTRY_ABI = [
   'function owner(bytes32 node) external view returns (address)',
   'function setSubnodeRecord(bytes32 node, bytes32 label, address owner, address resolver, uint64 ttl) external'
 ];
+const REGISTRAR_ABI = [
+  'function available(string name) external view returns (bool)',
+  'function rentPrice(string name, uint256 duration) external view returns (tuple(uint256 base, uint256 premium))',
+  'function makeCommitment(string name, address owner, uint256 duration, bytes32 secret, address resolver, bytes[] calldata data, bool reverseRecord, uint16 ownerControlledFuses) external view returns (bytes32)',
+  'function commit(bytes32 commitment) external',
+  'function register(string name, address owner, uint256 duration, bytes32 secret, address resolver, bytes[] calldata data, bool reverseRecord, uint16 ownerControlledFuses) external payable'
+];
 const NAME_WRAPPER = '0xD4416b13d2b3a9aBae7AcD5D6C2BbDBE25686401';
 const NAME_WRAPPER_ABI = [
   'function ownerOf(uint256 id) external view returns (address)',
@@ -728,6 +773,8 @@ const NAME_WRAPPER_ABI = [
 ];
 
 let ensWalletAddress = null;
+let ensMode = null; // 'register', 'update', 'subdomain'
+let ensSecret = null;
 
 function base32Decode(input) {
   const alphabet = 'abcdefghijklmnopqrstuvwxyz234567';
@@ -796,6 +843,16 @@ function ensShowStatus(type, msg) {
   el.appendChild(div);
 }
 
+function ensShowResult(title, txHash, ensName) {
+  const limoUrl = ensName + '.limo';
+  document.getElementById('ensResultTitle').textContent = title;
+  document.getElementById('ensResultSection').classList.remove('hidden');
+  document.getElementById('ensLimoLink').textContent = limoUrl;
+  document.getElementById('ensLimoLink').href = 'https://' + limoUrl;
+  document.getElementById('ensTxHash').textContent = 'tx: ' + txHash;
+  document.getElementById('ensStatus').innerHTML = '';
+}
+
 async function ensConnect() {
   const name = document.getElementById('ensInput').value.trim();
   if (!name || !name.includes('.eth')) { ensShowStatus('error', 'Enter a valid ENS domain'); return; }
@@ -812,13 +869,167 @@ async function ensConnect() {
       await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x1' }] });
     } catch { ensShowStatus('error', 'Please switch to Ethereum mainnet'); btn.disabled = false; btn.textContent = 'Connect Wallet'; return; }
 
-    document.getElementById('ensWalletAddr').textContent = ensWalletAddress.slice(0, 8) + '...' + ensWalletAddress.slice(-6);
-    document.getElementById('ensInputSection').classList.add('hidden');
-    document.getElementById('ensSignSection').classList.remove('hidden');
-    document.getElementById('ensStatus').innerHTML = '';
+    await loadEthers();
+    ensShowStatus('pending', 'Checking domain status...');
+
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const label = name.split('.')[0];
+    const isSubdomain = name.split('.').length > 2;
+
+    if (isSubdomain) {
+      // Subdomain flow
+      ensMode = 'subdomain';
+      document.getElementById('ensInputSection').classList.add('hidden');
+      document.getElementById('ensWalletAddr').textContent = ensWalletAddress.slice(0, 8) + '...' + ensWalletAddress.slice(-6);
+      document.getElementById('ensSignBtn').textContent = 'Set Up Subdomain';
+      document.getElementById('ensSignSection').classList.remove('hidden');
+      document.getElementById('ensStatus').innerHTML = '';
+      return;
+    }
+
+    // Top-level .eth -- check availability
+    const registrar = new ethers.Contract(ETH_REGISTRAR, REGISTRAR_ABI, provider);
+    const isAvailable = await registrar.available(label);
+
+    if (isAvailable) {
+      // Domain available -- show registration UI
+      ensMode = 'register';
+      document.getElementById('ensRegisterInfo').textContent = name + ' is available for registration.';
+      await ensUpdatePrice();
+      document.getElementById('ensInputSection').classList.add('hidden');
+      document.getElementById('ensRegisterSection').classList.remove('hidden');
+      document.getElementById('ensStatus').innerHTML = '';
+    } else {
+      // Domain exists -- check ownership
+      ensMode = 'update';
+      const registry = new ethers.Contract(ENS_REGISTRY, REGISTRY_ABI, provider);
+      const node = ethers.namehash(name);
+      const owner = await registry.owner(node);
+      let actualOwner = owner;
+      if (owner.toLowerCase() === NAME_WRAPPER.toLowerCase()) {
+        try {
+          const nw = new ethers.Contract(NAME_WRAPPER, NAME_WRAPPER_ABI, provider);
+          actualOwner = await nw.ownerOf(node);
+        } catch {}
+      }
+      if (actualOwner.toLowerCase() !== ensWalletAddress.toLowerCase()) {
+        ensShowStatus('error', name + ' is registered and owned by ' + actualOwner.slice(0, 8) + '...' + actualOwner.slice(-4) + '. You cannot update it.');
+        btn.disabled = false; btn.textContent = 'Connect Wallet';
+        return;
+      }
+      document.getElementById('ensInputSection').classList.add('hidden');
+      document.getElementById('ensWalletAddr').textContent = ensWalletAddress.slice(0, 8) + '...' + ensWalletAddress.slice(-6);
+      document.getElementById('ensSignBtn').textContent = 'Update ENS Contenthash';
+      document.getElementById('ensSignSection').classList.remove('hidden');
+      document.getElementById('ensStatus').innerHTML = '';
+    }
   } catch (err) {
     ensShowStatus('error', err.message || 'Failed to connect');
     btn.disabled = false; btn.textContent = 'Connect Wallet';
+  }
+}
+
+async function ensUpdatePrice() {
+  const name = document.getElementById('ensInput').value.trim();
+  const label = name.split('.')[0];
+  const duration = parseInt(document.getElementById('ensRegDuration').value);
+  const provider = new ethers.BrowserProvider(window.ethereum);
+  const registrar = new ethers.Contract(ETH_REGISTRAR, REGISTRAR_ABI, provider);
+  const price = await registrar.rentPrice(label, duration);
+  const totalWei = price.base + price.premium;
+  const ethPrice = ethers.formatEther(totalWei);
+  const years = duration / 31536000;
+  document.getElementById('ensRegisterPrice').textContent = parseFloat(ethPrice).toFixed(4) + ' ETH';
+  document.getElementById('ensRegisterPriceDetail').textContent =
+    years + ' year' + (years > 1 ? 's' : '') + (price.premium > 0n ? ' (includes premium)' : '');
+}
+
+async function ensStartRegistration() {
+  const btn = document.getElementById('ensRegisterBtn');
+  btn.disabled = true; btn.textContent = 'Sending commit...';
+
+  try {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const registrar = new ethers.Contract(ETH_REGISTRAR, REGISTRAR_ABI, signer);
+    const ensName = document.getElementById('ensInput').value.trim();
+    const label = ensName.split('.')[0];
+    const duration = parseInt(document.getElementById('ensRegDuration').value);
+
+    ensSecret = ethers.hexlify(ethers.randomBytes(32));
+
+    // Encode contenthash to set during registration
+    const contenthash = encodeIpfsContenthash(currentCid);
+    const node = ethers.namehash(ensName);
+    const resolverIface = new ethers.Interface(RESOLVER_ABI);
+    const setContenthashData = resolverIface.encodeFunctionData('setContenthash', [node, contenthash]);
+
+    const commitment = await registrar.makeCommitment(
+      label, ensWalletAddress, duration, ensSecret,
+      PUBLIC_RESOLVER, [setContenthashData], false, 0
+    );
+
+    ensShowStatus('pending', 'Confirm the commit transaction in your wallet...');
+    const commitTx = await registrar.commit(commitment);
+    ensShowStatus('pending', 'Waiting for commit confirmation...');
+    await commitTx.wait();
+
+    // Start countdown
+    document.getElementById('ensRegisterSection').classList.add('hidden');
+    document.getElementById('ensCountdownSection').classList.remove('hidden');
+    ensShowStatus('pending', 'Waiting for commit to mature...');
+
+    let remaining = 65;
+    const countdownEl = document.getElementById('ensCountdown');
+    const interval = setInterval(() => {
+      remaining--;
+      countdownEl.textContent = remaining;
+      if (remaining <= 0) {
+        clearInterval(interval);
+        ensCompleteRegistration();
+      }
+    }, 1000);
+  } catch (err) {
+    ensShowStatus('error', err.message || 'Commit failed');
+    btn.disabled = false; btn.textContent = 'Register Domain';
+  }
+}
+
+async function ensCompleteRegistration() {
+  ensShowStatus('pending', 'Confirm the registration transaction in your wallet...');
+
+  try {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const registrar = new ethers.Contract(ETH_REGISTRAR, REGISTRAR_ABI, signer);
+    const ensName = document.getElementById('ensInput').value.trim();
+    const label = ensName.split('.')[0];
+    const duration = parseInt(document.getElementById('ensRegDuration').value);
+
+    const contenthash = encodeIpfsContenthash(currentCid);
+    const node = ethers.namehash(ensName);
+    const resolverIface = new ethers.Interface(RESOLVER_ABI);
+    const setContenthashData = resolverIface.encodeFunctionData('setContenthash', [node, contenthash]);
+
+    // Re-fetch price + 5% buffer
+    const price = await registrar.rentPrice(label, duration);
+    const totalWei = price.base + price.premium;
+    const value = totalWei + (totalWei * 5n / 100n);
+
+    ensShowStatus('pending', 'Sending registration transaction...');
+    const registerTx = await registrar.register(
+      label, ensWalletAddress, duration, ensSecret,
+      PUBLIC_RESOLVER, [setContenthashData], false, 0,
+      { value }
+    );
+
+    ensShowStatus('pending', 'Waiting for registration confirmation...');
+    await registerTx.wait();
+
+    document.getElementById('ensCountdownSection').classList.add('hidden');
+    ensShowResult('Domain Registered', registerTx.hash, ensName);
+  } catch (err) {
+    ensShowStatus('error', err.message || 'Registration failed');
   }
 }
 
@@ -834,8 +1045,8 @@ async function ensSign() {
     const signer = await provider.getSigner();
     const node = ethers.namehash(ensName);
 
-    // Handle subdomains
-    if (ensName.split('.').length > 2) {
+    // Handle subdomains -- create if needed
+    if (ensMode === 'subdomain') {
       const registry = new ethers.Contract(ENS_REGISTRY, REGISTRY_ABI, provider);
       const currentOwner = await registry.owner(node);
       const signerAddr = await signer.getAddress();
@@ -873,17 +1084,11 @@ async function ensSign() {
     ensShowStatus('pending', 'Waiting for confirmation...');
     await tx.wait();
 
-    // Show result
-    const limoUrl = ensName + '.limo';
     document.getElementById('ensSignSection').classList.add('hidden');
-    document.getElementById('ensResultSection').classList.remove('hidden');
-    document.getElementById('ensLimoLink').textContent = limoUrl;
-    document.getElementById('ensLimoLink').href = 'https://' + limoUrl;
-    document.getElementById('ensTxHash').textContent = 'tx: ' + tx.hash;
-    document.getElementById('ensStatus').innerHTML = '';
+    ensShowResult(ensMode === 'subdomain' ? 'Subdomain Created' : 'ENS Updated', tx.hash, ensName);
   } catch (err) {
     ensShowStatus('error', err.message || 'Transaction failed');
-    btn.disabled = false; btn.textContent = 'Update ENS Contenthash';
+    btn.disabled = false; btn.textContent = ensMode === 'subdomain' ? 'Set Up Subdomain' : 'Update ENS Contenthash';
   }
 }
 
