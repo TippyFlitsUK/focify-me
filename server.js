@@ -157,7 +157,7 @@ app.get("/api/demo/stream", (req, res) => {
   // Spawn nova demo
   // NOVA_CLI env var overrides npx (for local builds before npm publish)
   const novaCli = process.env.NOVA_CLI;
-  const args = ["demo", input, "--json", "--provider-id", "9"];
+  const args = ["demo", input, "--json", "--provider-id", "9", "--max-pages", "100"];
   const spawnOpts = { env: { ...process.env, FORCE_COLOR: "0" }, stdio: ["ignore", "pipe", "pipe"] };
   const child = novaCli
     ? spawn("node", [novaCli, ...args], spawnOpts)

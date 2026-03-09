@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FOCify.ME - Website to Filecoin in seconds</title>
-<link rel="icon" type="image/png" href="focify.png">
+<link rel="icon" type="image/png" href="icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -199,19 +199,29 @@ h1,h2,h3{font-family:'Sora','Inter',system-ui,sans-serif}
 }
 .ens-btn:hover{background:#1E3070}
 
-/* ── How it works ── */
-.how-section{
-  max-width:900px;margin:0 auto;padding:64px 24px;
+/* ── The FOCified ── */
+.focified-section{
+  max-width:1100px;margin:0 auto;padding:64px 24px 0;
 }
-.how-section h2{text-align:center;font-size:24px;margin-bottom:40px}
-.how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
-.how-card{
+.focified-section .focified-logo{display:block;margin:0 auto 12px;height:96px}
+.focified-section h2{text-align:center;font-size:24px;margin-bottom:12px}
+.focified-section .subtitle{text-align:center;color:var(--secondary);font-size:15px;margin-bottom:40px}
+.focified-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.focified-card{
   background:var(--card-bg);border:1px solid var(--border);
-  border-radius:var(--radius);padding:28px;text-align:center;
+  border-radius:var(--radius);overflow:hidden;transition:transform .15s,box-shadow .15s;
 }
-.how-icon{font-size:32px;margin-bottom:16px}
-.how-card h3{font-size:16px;font-weight:600;margin-bottom:8px}
-.how-card p{font-size:14px;color:var(--secondary);line-height:1.6}
+.focified-card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(15,23,42,.1)}
+.focified-card a{text-decoration:none;color:inherit}
+.focified-thumb{width:100%;height:180px;object-fit:cover;object-position:top;display:block;border-bottom:1px solid var(--border)}
+.focified-info{padding:14px}
+.focified-name{font-family:'Sora',sans-serif;font-size:17px;font-weight:600;color:var(--dark);margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.focified-stats{display:flex;flex-direction:column;gap:6px}
+.focified-stat{display:flex;justify-content:space-between;font-size:14px}
+.focified-stat .label{color:var(--secondary)}
+.focified-stat .value{color:var(--dark);font-weight:500;font-family:'JetBrains Mono',monospace;font-size:13px}
+.focified-stat .price{color:#196ad6;font-weight:600}
+
 
 /* ── Footer ── */
 footer{
@@ -256,6 +266,7 @@ footer .links{display:flex;justify-content:center;gap:24px;margin-bottom:12px}
         <input type="text" class="url-input" id="urlInput" placeholder="example.com" autocomplete="off" spellcheck="false">
         <button type="submit" class="focify-btn" id="goBtn">FOCify</button>
       </form>
+      <p style="text-align:center;font-size:12px;color:var(--secondary);margin-top:8px">Demo indexes up to 100 pages per site</p>
     </div>
 
     <!-- Upload tab -->
@@ -338,27 +349,47 @@ footer .links{display:flex;justify-content:center;gap:24px;margin-bottom:12px}
     </div>
 </section>
 
-<!-- ── How it works ── -->
-<section class="how-section">
-  <h2>How it works</h2>
-  <div class="how-grid">
-    <div class="how-card">
-      <div class="how-icon">&#127760;</div>
-      <h3>Capture</h3>
-      <p>A real browser visits every page of your site, downloading all HTML, CSS, JS, images, and fonts into a self-contained copy.</p>
-    </div>
-    <div class="how-card">
-      <div class="how-icon">&#9939;</div>
-      <h3>Pin</h3>
-      <p>The copy is uploaded to Filecoin Onchain Cloud -- content-addressed, redundant, and stored on the Filecoin network.</p>
-    </div>
-    <div class="how-card">
-      <div class="how-icon">&#128279;</div>
-      <h3>Serve</h3>
-      <p>Your site gets an IPFS CID and is instantly accessible through gateways worldwide. Optionally point an ENS domain at it.</p>
-    </div>
+<!-- ── The FOCified ── -->
+<section class="focified-section">
+  <img class="focified-logo" src="focified.png" alt="The FOCified">
+  <p class="subtitle">Sites already living on Filecoin Onchain Cloud</p>
+  <div class="focified-grid">
+    <div class="focified-card"><a href="https://filecoinio.focify.eth.limo" target="_blank">
+      <img class="focified-thumb" src="screenshots/filecoin-io.png" alt="filecoin.io">
+      <div class="focified-info">
+        <div class="focified-name">filecoin.io</div>
+        <div class="focified-stats">
+          <div class="focified-stat"><span class="label">Pages</span><span class="value">845</span></div>
+          <div class="focified-stat"><span class="label">Size</span><span class="value">452 MiB</span></div>
+          <div class="focified-stat"><span class="label price">Monthly</span><span class="value price">$0.00216</span></div>
+        </div>
+      </div>
+    </a></div>
+    <div class="focified-card"><a href="https://filoz.focify.eth.limo/" target="_blank">
+      <img class="focified-thumb" src="screenshots/filoz-org.png" alt="filoz.org">
+      <div class="focified-info">
+        <div class="focified-name">filoz.org</div>
+        <div class="focified-stats">
+          <div class="focified-stat"><span class="label">Pages</span><span class="value">3</span></div>
+          <div class="focified-stat"><span class="label">Size</span><span class="value">8.7 MB</span></div>
+          <div class="focified-stat"><span class="label price">Monthly</span><span class="value price">$0.00004</span></div>
+        </div>
+      </div>
+    </a></div>
+    <div class="focified-card"><a href="https://protocolai.focify.eth.limo/" target="_blank">
+      <img class="focified-thumb" src="screenshots/protocol-ai.png" alt="protocol.ai">
+      <div class="focified-info">
+        <div class="focified-name">protocol.ai</div>
+        <div class="focified-stats">
+          <div class="focified-stat"><span class="label">Pages</span><span class="value">32</span></div>
+          <div class="focified-stat"><span class="label">Size</span><span class="value">68 MB</span></div>
+          <div class="focified-stat"><span class="label price">Monthly</span><span class="value price">$0.00032</span></div>
+        </div>
+      </div>
+    </a></div>
   </div>
 </section>
+
 
 <footer>
   <div class="links">
