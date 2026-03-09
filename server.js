@@ -152,6 +152,11 @@ app.get("/api/demo/stream", (req, res) => {
     res.write(`data: ${JSON.stringify(data)}\n\n`);
   }
 
+  // Keep connection alive during long crawls (Cloudflare times out idle connections at 100s)
+  const keepalive = setInterval(() => {
+    res.write(": keepalive\n\n");
+  }, 30_000);
+
   sendEvent({ type: "info", text: `Starting demo for ${input}...` });
 
   // Spawn nova demo
@@ -207,6 +212,7 @@ app.get("/api/demo/stream", (req, res) => {
       sendEvent({ type: "error", text: `Deploy failed (exit code ${code})` });
     }
 
+    clearInterval(keepalive);
     sendEvent({ type: "done" });
     res.end();
 
@@ -218,6 +224,7 @@ app.get("/api/demo/stream", (req, res) => {
 
   child.on("error", (err) => {
     activeJobs--;
+    clearInterval(keepalive);
     sendEvent({ type: "error", text: err.message });
     sendEvent({ type: "done" });
     res.end();
@@ -225,6 +232,7 @@ app.get("/api/demo/stream", (req, res) => {
 
   // Clean up if client disconnects
   req.on("close", () => {
+    clearInterval(keepalive);
     if (!child.killed) {
       child.kill("SIGTERM");
       activeJobs--;

@@ -643,6 +643,7 @@ function runDemo(sseUrl, displayName) {
         break;
 
       case 'complete':
+        streamFinished = true;
         currentCid = data.cid;
         const gwUrl = data.gatewayUrl || ('https://' + data.cid + '.ipfs.dweb.link/');
 
@@ -666,16 +667,20 @@ function runDemo(sseUrl, displayName) {
         break;
 
       case 'done':
+        streamFinished = true;
         eventSource.close();
         eventSource = null;
         break;
     }
   };
 
+  let streamFinished = false;
   eventSource.onerror = function() {
     eventSource.close();
     eventSource = null;
-    addLine('Connection lost', 'error-line');
+    if (!streamFinished) {
+      addLine('Connection lost', 'error-line');
+    }
   };
 }
 
