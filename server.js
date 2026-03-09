@@ -156,7 +156,8 @@ function finishJob(job) {
 
 // Active jobs (limit concurrency)
 let activeJobs = 0;
-const MAX_JOBS = 3;
+const MAX_JOBS = 10;
+const JOB_TIMEOUT = 10 * 60_000; // Kill subprocess after 10 minutes
 
 // ── Start a job ──
 app.post("/api/demo/start", (req, res) => {
@@ -184,6 +185,16 @@ app.post("/api/demo/start", (req, res) => {
     }
   }
 
+  // Validate uploaded file path -- must be in the uploads temp dir
+  if (filePath) {
+    const uploadsDir = join(tmpdir(), "focify-uploads");
+    const resolved = join(filePath);
+    if (!resolved.startsWith(uploadsDir)) {
+      res.status(400).json({ error: "Invalid file path" });
+      return;
+    }
+  }
+
   activeJobs++;
   const job = createJob(input);
 
@@ -207,6 +218,14 @@ app.post("/api/demo/start", (req, res) => {
   job.child = child;
   let stdoutBuf = "";
 
+  // Kill subprocess if it runs too long (prevents hung jobs blocking slots)
+  const jobTimer = setTimeout(() => {
+    if (!job.finished) {
+      addEvent(job, { type: "error", text: "Job timed out after 10 minutes" });
+      child.kill("SIGTERM");
+    }
+  }, JOB_TIMEOUT);
+
   const rl = createInterface({ input: child.stderr });
   rl.on("line", (raw) => {
     const event = parseLine(raw);
@@ -220,6 +239,7 @@ app.post("/api/demo/start", (req, res) => {
   });
 
   child.on("close", (code) => {
+    clearTimeout(jobTimer);
     activeJobs--;
 
     let directory;
@@ -253,6 +273,7 @@ app.post("/api/demo/start", (req, res) => {
   });
 
   child.on("error", (err) => {
+    clearTimeout(jobTimer);
     activeJobs--;
     addEvent(job, { type: "error", text: err.message });
     addEvent(job, { type: "done" });
@@ -312,6 +333,15 @@ app.post("/api/upload", upload.single("archive"), (req, res) => {
     return;
   }
   res.json({ path: req.file.path, originalName: req.file.originalname });
+});
+
+// Error handler for multer and other middleware errors
+app.use((err, _req, res, _next) => {
+  if (err.code === "LIMIT_FILE_SIZE") {
+    res.status(413).json({ error: "File too large (max 500MB)" });
+  } else {
+    res.status(400).json({ error: err.message || "Upload failed" });
+  }
 });
 
 const server = app.listen(PORT, () => {

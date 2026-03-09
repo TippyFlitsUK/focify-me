@@ -6,8 +6,8 @@ module.exports = {
     env: {
       NODE_ENV: "production",
       PORT: "80",
-      NOVA_CLI: "/home/tippyflits/filecoin-nova/dist/cli.js",
     },
+    kill_timeout: 600000,
     max_memory_restart: "512M",
     node_args: "--max-old-space-size=512",
   }],

@@ -242,7 +242,7 @@ footer .links{display:flex;justify-content:center;gap:24px;margin-bottom:12px}
 @media(max-width:700px){
   .url-form{flex-direction:column}
   .ens-form{flex-direction:column}
-  .how-grid{grid-template-columns:1fr}
+  .focified-grid{grid-template-columns:1fr}
   .hero{padding:32px 16px 0}
 }
 
@@ -529,7 +529,13 @@ function addSpinner(text) {
   const div = document.createElement('div');
   div.className = 'line';
   div.id = 'spinnerLine';
-  div.innerHTML = '<span class="spinner"></span><span class="info-line">' + escapeHtml(text) + '</span>';
+  const spinner = document.createElement('span');
+  spinner.className = 'spinner';
+  const span = document.createElement('span');
+  span.className = 'info-line';
+  span.textContent = text;
+  div.appendChild(spinner);
+  div.appendChild(span);
   terminalBody.appendChild(div);
   terminalBody.scrollTop = terminalBody.scrollHeight;
 }
@@ -537,12 +543,6 @@ function addSpinner(text) {
 function removeSpinner() {
   const el = document.getElementById('spinnerLine');
   if (el) el.remove();
-}
-
-function escapeHtml(s) {
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
 }
 
 // ── Start demo (URL) ──

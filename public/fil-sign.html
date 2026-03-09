@@ -352,15 +352,20 @@ async function signTransactions() {
     document.getElementById('result-section').classList.remove('hidden');
 
     const details = document.getElementById('resultDetails');
-    let html = '';
+    details.textContent = '';
     for (const r of results) {
-      const explorer = chainId === 314
-        ? 'https://filfox.info/en/tx/' + r.hash
-        : 'https://calibration.filscan.io/tx/' + r.hash;
-      html += '<div class="result-field"><label>' + r.label + '</label>';
-      html += '<input type="text" value="' + r.hash + '" readonly></div>';
+      const field = document.createElement('div');
+      field.className = 'result-field';
+      const lbl = document.createElement('label');
+      lbl.textContent = r.label;
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.value = r.hash;
+      inp.readOnly = true;
+      field.appendChild(lbl);
+      field.appendChild(inp);
+      details.appendChild(field);
     }
-    details.innerHTML = html;
     setStep(3);
 
   } catch (err) {
