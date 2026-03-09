@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FOCify.ME - Website to Filecoin in seconds</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --blue:#2563EB;--light-blue:#38BDF8;--dark-blue:#1E3A8A;
+  --dark:#0F172A;--secondary:#6B7280;--muted:#94A3B8;
+  --bg:#ffffff;--card-bg:#F8FAFC;--border:#E2E8F0;
+  --success:#10B981;--error:#EF4444;--warning:#F59E0B;
+  --radius:12px;--radius-lg:16px;
+}
+body{
+  font-family:'Inter',system-ui,sans-serif;color:var(--dark);background:var(--bg);
+  min-height:100vh;display:flex;flex-direction:column;
+}
+h1,h2,h3{font-family:'Sora','Inter',system-ui,sans-serif}
+
+/* ── Hero ── */
+.hero{
+  text-align:center;padding:48px 24px 0;
+  background:linear-gradient(180deg, #F0F7FF 0%, var(--bg) 100%);
+}
+.hero img{width:360px;max-width:85%;height:auto;margin-bottom:16px}
+.hero h1{
+  font-size:clamp(28px, 5vw, 42px);font-weight:800;
+  color:var(--dark);margin-bottom:8px;letter-spacing:-0.5px;
+}
+.hero .tagline{
+  font-size:clamp(16px, 2.5vw, 20px);color:var(--secondary);
+  margin-bottom:40px;font-weight:400;
+}
+.hero .tagline span{color:var(--blue);font-weight:600}
+
+/* ── Input area ── */
+.input-section{
+  max-width:640px;margin:0 auto;padding:0 24px;width:100%;
+}
+.input-card{
+  background:var(--card-bg);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:32px;margin-bottom:32px;
+  transition:border-color .2s;
+}
+.input-card:focus-within{border-color:var(--blue)}
+
+.tab-bar{display:flex;gap:4px;margin-bottom:24px;background:#E2E8F0;border-radius:8px;padding:3px}
+.tab{
+  flex:1;padding:10px 16px;border:none;background:transparent;
+  border-radius:6px;font-size:14px;font-weight:500;cursor:pointer;
+  color:var(--secondary);transition:all .15s;font-family:inherit;
+}
+.tab.active{background:#fff;color:var(--dark);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.tab:hover:not(.active){color:var(--dark)}
+
+.url-form{display:flex;gap:10px}
+.url-input{
+  flex:1;padding:14px 18px;border:1px solid var(--border);border-radius:var(--radius);
+  font-size:15px;font-family:inherit;background:#fff;color:var(--dark);
+  transition:border-color .15s;
+}
+.url-input:focus{outline:none;border-color:var(--blue)}
+.url-input::placeholder{color:var(--muted)}
+
+.focify-btn{
+  padding:14px 32px;border:none;border-radius:var(--radius);
+  background:var(--blue);color:#fff;font-size:15px;font-weight:600;
+  cursor:pointer;transition:all .15s;font-family:inherit;white-space:nowrap;
+}
+.focify-btn:hover{background:#1D4ED8;transform:translateY(-1px)}
+.focify-btn:active{transform:translateY(0)}
+.focify-btn:disabled{background:var(--border);color:var(--secondary);cursor:not-allowed;transform:none}
+
+/* Upload area */
+.upload-zone{
+  border:2px dashed var(--border);border-radius:var(--radius);padding:48px 24px;
+  text-align:center;cursor:pointer;transition:all .2s;position:relative;
+}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--blue);background:#EFF6FF}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.upload-icon{font-size:36px;margin-bottom:12px;color:var(--muted)}
+.upload-zone p{color:var(--secondary);font-size:14px}
+.upload-zone .formats{color:var(--muted);font-size:12px;margin-top:8px}
+.upload-filename{
+  display:flex;align-items:center;gap:12px;padding:12px 16px;
+  background:#EFF6FF;border-radius:8px;margin-top:16px;font-size:14px;color:var(--blue);
+}
+.upload-filename .remove{
+  margin-left:auto;background:none;border:none;color:var(--error);cursor:pointer;font-size:16px;
+}
+
+/* ── Terminal / Progress ── */
+.terminal-section{
+  max-width:960px;margin:0 auto;padding:0 24px;width:100%;
+}
+.terminal{
+  background:var(--dark);border-radius:var(--radius-lg);overflow:hidden;
+  margin-bottom:32px;box-shadow:0 8px 32px rgba(15,23,42,.18);
+}
+.terminal-bar{
+  display:flex;align-items:center;gap:8px;padding:12px 16px;
+  background:rgba(255,255,255,.06);border-bottom:1px solid rgba(255,255,255,.06);
+}
+.terminal-dot{width:12px;height:12px;border-radius:50%}
+.terminal-dot.r{background:#EF4444}.terminal-dot.y{background:#F59E0B}.terminal-dot.g{background:#10B981}
+.terminal-title{
+  margin-left:8px;font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;
+}
+.terminal-body{
+  padding:20px;font-family:'JetBrains Mono',monospace;font-size:13px;
+  line-height:1.8;color:#CBD5E1;min-height:200px;max-height:400px;overflow-y:auto;
+  scrollbar-width:none;-ms-overflow-style:none;
+}
+.terminal-body::-webkit-scrollbar{display:none}
+.terminal-body .line{display:flex;gap:8px;align-items:flex-start}
+.terminal-body .prompt{color:var(--light-blue);flex-shrink:0;user-select:none}
+.terminal-body .step-line{color:#E2E8F0;font-weight:500}
+.terminal-body .step-num{color:var(--light-blue)}
+.terminal-body .success-line{color:var(--success)}
+.terminal-body .error-line{color:var(--error)}
+.terminal-body .info-line{color:#94A3B8}
+.terminal-body .url-text{color:var(--light-blue);opacity:.7}
+.terminal-body .cid-text{color:#A78BFA}
+
+/* Spinner */
+.spinner{
+  display:inline-block;width:14px;height:14px;border:2px solid rgba(56,189,248,.3);
+  border-top-color:var(--light-blue);border-radius:50%;
+  animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Result card ── */
+.result-section{
+  max-width:900px;margin:0 auto;padding:0 24px 48px;width:100%;
+}
+.result-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:stretch;
+}
+.result-card{
+  background:var(--card-bg);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:32px;
+  animation:slideUp .4s ease;
+  display:flex;flex-direction:column;
+}
+@keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+.result-card h2{font-size:20px;margin-bottom:20px;color:var(--dark)}
+.result-row{
+  display:flex;align-items:center;gap:12px;padding:12px 0;
+  border-bottom:1px solid var(--border);
+}
+.result-row:last-child{border-bottom:none}
+.result-label{
+  font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;
+  color:var(--secondary);min-width:70px;
+}
+.result-value{
+  font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--dark);
+  word-break:break-all;flex:1;
+}
+.result-value a{color:var(--blue);text-decoration:none}
+.result-value a:hover{text-decoration:underline}
+.copy-btn{
+  background:none;border:1px solid var(--border);border-radius:6px;
+  padding:6px 12px;font-size:12px;cursor:pointer;color:var(--secondary);
+  transition:all .15s;font-family:inherit;
+}
+.copy-btn:hover{border-color:var(--blue);color:var(--blue)}
+
+.visit-btn{
+  display:block;width:100%;margin-top:auto;padding:14px;border:none;
+  border-radius:var(--radius);background:var(--success);color:#fff;
+  font-size:15px;font-weight:600;cursor:pointer;transition:all .15s;
+  font-family:inherit;text-align:center;text-decoration:none;
+}
+.visit-btn:hover{background:#059669;transform:translateY(-1px)}
+
+/* ── ENS section ── */
+.ens-card{
+  background:var(--card-bg);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:32px;
+  animation:slideUp .4s ease .2s both;
+  display:flex;flex-direction:column;
+}
+.ens-card h2{font-size:18px;margin-bottom:8px}
+.ens-card .subtitle{color:var(--secondary);font-size:14px;margin-bottom:20px}
+.ens-form{display:flex;gap:10px}
+.ens-input{
+  flex:1;padding:12px 16px;border:1px solid var(--border);border-radius:var(--radius);
+  font-size:14px;font-family:inherit;background:#fff;
+}
+.ens-input:focus{outline:none;border-color:var(--blue)}
+.ens-btn{
+  padding:12px 24px;border:none;border-radius:var(--radius);
+  background:var(--dark-blue);color:#fff;font-size:14px;font-weight:600;
+  cursor:pointer;font-family:inherit;white-space:nowrap;
+}
+.ens-btn:hover{background:#1E3070}
+
+/* ── How it works ── */
+.how-section{
+  max-width:900px;margin:0 auto;padding:64px 24px;
+}
+.how-section h2{text-align:center;font-size:24px;margin-bottom:40px}
+.how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.how-card{
+  background:var(--card-bg);border:1px solid var(--border);
+  border-radius:var(--radius);padding:28px;text-align:center;
+}
+.how-icon{font-size:32px;margin-bottom:16px}
+.how-card h3{font-size:16px;font-weight:600;margin-bottom:8px}
+.how-card p{font-size:14px;color:var(--secondary);line-height:1.6}
+
+/* ── Footer ── */
+footer{
+  margin-top:auto;padding:32px 24px;text-align:center;
+  font-size:13px;color:var(--secondary);border-top:1px solid var(--border);
+}
+footer a{color:var(--blue);text-decoration:none}
+footer a:hover{text-decoration:underline}
+footer .links{display:flex;justify-content:center;gap:24px;margin-bottom:12px}
+
+/* ── Responsive ── */
+@media(max-width:700px){
+  .url-form{flex-direction:column}
+  .ens-form{flex-direction:column}
+  .how-grid{grid-template-columns:1fr}
+  .result-grid{grid-template-columns:1fr}
+  .hero{padding:32px 16px 0}
+}
+
+.hidden{display:none}
+</style>
+</head>
+<body>
+
+<!-- ── Hero ── -->
+<section class="hero">
+  <img src="focify.png" alt="FOCify.ME">
+  <h1>Website to Filecoin in seconds</h1>
+  <p class="tagline">Enter any URL and watch it go live on <span>Filecoin Onchain Cloud</span></p>
+</section>
+
+<!-- ── Input ── -->
+<section class="input-section" id="inputSection">
+  <div class="input-card">
+    <div class="tab-bar">
+      <button class="tab active" data-tab="url" onclick="switchTab('url')">Enter URL</button>
+      <button class="tab" data-tab="upload" onclick="switchTab('upload')">Upload Archive</button>
+    </div>
+
+    <!-- URL tab -->
+    <div id="urlTab">
+      <form class="url-form" onsubmit="startDemo(event)">
+        <input type="text" class="url-input" id="urlInput" placeholder="example.com" autocomplete="off" spellcheck="false">
+        <button type="submit" class="focify-btn" id="goBtn">FOCify</button>
+      </form>
+    </div>
+
+    <!-- Upload tab -->
+    <div id="uploadTab" class="hidden">
+      <div class="upload-zone" id="dropZone">
+        <input type="file" id="fileInput" accept=".zip,.tar,.tgz,.tar.gz" onchange="handleFile(this)">
+        <div class="upload-icon">&#128230;</div>
+        <p>Drop an archive here or click to browse</p>
+        <p class="formats">.zip, .tar, .tar.gz, .tgz -- up to 500MB</p>
+      </div>
+      <div id="fileInfo" class="hidden">
+        <div class="upload-filename">
+          <span id="fileName"></span>
+          <button class="remove" onclick="clearFile()">&times;</button>
+        </div>
+        <button class="focify-btn" style="width:100%;margin-top:16px" onclick="startUploadDemo()">FOCify</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Terminal ── -->
+<section class="terminal-section hidden" id="terminalSection">
+  <div class="terminal">
+    <div class="terminal-bar">
+      <span class="terminal-dot r"></span>
+      <span class="terminal-dot y"></span>
+      <span class="terminal-dot g"></span>
+      <span class="terminal-title" id="terminalTitle">focify demo</span>
+    </div>
+    <div class="terminal-body" id="terminalBody">
+    </div>
+  </div>
+</section>
+
+<!-- ── Result ── -->
+<section class="result-section hidden" id="resultSection">
+  <div class="result-grid">
+    <div class="result-card">
+      <h2>Your site is live</h2>
+      <div class="result-row">
+        <span class="result-label">CID</span>
+        <span class="result-value cid-text" id="resultCid"></span>
+        <button class="copy-btn" onclick="copyText('resultCid')">Copy</button>
+      </div>
+      <div class="result-row">
+        <span class="result-label">FOC</span>
+        <span class="result-value"><a id="resultUrl" href="#" target="_blank"></a></span>
+        <button class="copy-btn" onclick="copyText('resultUrl')">Copy</button>
+      </div>
+      <div class="result-row">
+        <span class="result-label">IPFS</span>
+        <span class="result-value"><a id="resultDwebUrl" href="#" target="_blank"></a></span>
+        <button class="copy-btn" onclick="copyText('resultDwebUrl')">Copy</button>
+      </div>
+      <a class="visit-btn" id="visitBtn" href="#" target="_blank">Visit your site</a>
+    </div>
+
+    <!-- ENS -->
+    <div class="ens-card">
+      <h2>Point an ENS domain</h2>
+      <p class="subtitle">Optional -- give your site a human-readable .eth.limo address</p>
+      <div class="ens-form">
+        <input type="text" class="ens-input" id="ensInput" placeholder="mysite.eth">
+        <button class="ens-btn" id="ensBtn" onclick="pointEns()">Update ENS</button>
+      </div>
+      <div id="ensStatus"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── How it works ── -->
+<section class="how-section">
+  <h2>How it works</h2>
+  <div class="how-grid">
+    <div class="how-card">
+      <div class="how-icon">&#127760;</div>
+      <h3>Capture</h3>
+      <p>A real browser visits every page of your site, downloading all HTML, CSS, JS, images, and fonts into a self-contained copy.</p>
+    </div>
+    <div class="how-card">
+      <div class="how-icon">&#9939;</div>
+      <h3>Pin</h3>
+      <p>The copy is uploaded to Filecoin Onchain Cloud -- content-addressed, redundant, and stored on the Filecoin network.</p>
+    </div>
+    <div class="how-card">
+      <div class="how-icon">&#128279;</div>
+      <h3>Serve</h3>
+      <p>Your site gets an IPFS CID and is instantly accessible through gateways worldwide. Optionally point an ENS domain at it.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="links">
+    <a href="https://github.com/FilOzone/filecoin-nova" target="_blank">GitHub</a>
+    <a href="https://www.npmjs.com/package/filecoin-nova" target="_blank">NPM</a>
+    <a href="https://filecoin.cloud" target="_blank">Filecoin Onchain Cloud</a>
+  </div>
+  <p>Built for &amp; powered by <a href="https://filecoin.cloud" target="_blank">Filecoin Onchain Cloud</a></p>
+</footer>
+
+<script>
+// ── State ──
+let currentCid = null;
+let selectedFile = null;
+let eventSource = null;
+
+// ── Tab switching ──
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.getElementById('urlTab').classList.toggle('hidden', tab !== 'url');
+  document.getElementById('uploadTab').classList.toggle('hidden', tab !== 'upload');
+}
+
+// ── File handling ──
+const dropZone = document.getElementById('dropZone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  if (e.dataTransfer.files.length) {
+    document.getElementById('fileInput').files = e.dataTransfer.files;
+    handleFile(document.getElementById('fileInput'));
+  }
+});
+
+function handleFile(input) {
+  if (!input.files.length) return;
+  selectedFile = input.files[0];
+  document.getElementById('fileName').textContent = selectedFile.name + ' (' + formatSize(selectedFile.size) + ')';
+  document.getElementById('fileInfo').classList.remove('hidden');
+  dropZone.classList.add('hidden');
+}
+
+function clearFile() {
+  selectedFile = null;
+  document.getElementById('fileInput').value = '';
+  document.getElementById('fileInfo').classList.add('hidden');
+  dropZone.classList.remove('hidden');
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+// ── Terminal output ──
+const terminalBody = document.getElementById('terminalBody');
+
+function addLine(html, className) {
+  const div = document.createElement('div');
+  div.className = 'line';
+  // Build safely
+  if (className === 'step-line') {
+    div.innerHTML = '';
+    const span = document.createElement('span');
+    span.className = 'step-line';
+    span.textContent = html;
+    div.appendChild(span);
+  } else {
+    const span = document.createElement('span');
+    span.className = className || 'info-line';
+    span.textContent = html;
+    div.appendChild(span);
+  }
+  terminalBody.appendChild(div);
+  terminalBody.scrollTop = terminalBody.scrollHeight;
+}
+
+function addStepLine(current, total, text) {
+  const div = document.createElement('div');
+  div.className = 'line';
+  const num = document.createElement('span');
+  num.className = 'step-num';
+  num.textContent = '[' + current + '/' + total + '] ';
+  const txt = document.createElement('span');
+  txt.className = 'step-line';
+  txt.textContent = text;
+  div.appendChild(num);
+  div.appendChild(txt);
+  terminalBody.appendChild(div);
+  terminalBody.scrollTop = terminalBody.scrollHeight;
+}
+
+function addProgressLine(text, urlStr) {
+  const div = document.createElement('div');
+  div.className = 'line';
+  const pad = document.createElement('span');
+  pad.className = 'info-line';
+  pad.textContent = '  ' + text + ' ';
+  div.appendChild(pad);
+  if (urlStr) {
+    const u = document.createElement('span');
+    u.className = 'url-text';
+    u.textContent = urlStr;
+    div.appendChild(u);
+  }
+  terminalBody.appendChild(div);
+  terminalBody.scrollTop = terminalBody.scrollHeight;
+}
+
+function addSpinner(text) {
+  const div = document.createElement('div');
+  div.className = 'line';
+  div.id = 'spinnerLine';
+  div.innerHTML = '<span class="spinner"></span><span class="info-line">' + escapeHtml(text) + '</span>';
+  terminalBody.appendChild(div);
+  terminalBody.scrollTop = terminalBody.scrollHeight;
+}
+
+function removeSpinner() {
+  const el = document.getElementById('spinnerLine');
+  if (el) el.remove();
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// ── Start demo (URL) ──
+function startDemo(e) {
+  e.preventDefault();
+  const url = document.getElementById('urlInput').value.trim();
+  if (!url) return;
+  runDemo('/api/demo/stream?url=' + encodeURIComponent(url), url);
+}
+
+// ── Start demo (upload) ──
+async function startUploadDemo() {
+  if (!selectedFile) return;
+
+  // Upload file first
+  const formData = new FormData();
+  formData.append('archive', selectedFile);
+
+  document.getElementById('inputSection').classList.add('hidden');
+  document.getElementById('terminalSection').classList.remove('hidden');
+  document.getElementById('terminalTitle').textContent = 'focify demo ' + selectedFile.name;
+  terminalBody.innerHTML = '';
+  addSpinner('Uploading ' + selectedFile.name + '...');
+
+  try {
+    const resp = await fetch('/api/upload', { method: 'POST', body: formData });
+    if (!resp.ok) {
+      const err = await resp.json();
+      removeSpinner();
+      addLine(err.error || 'Upload failed', 'error-line');
+      return;
+    }
+    const data = await resp.json();
+    removeSpinner();
+    addLine('Upload complete', 'success-line');
+    runDemo('/api/demo/stream?file=' + encodeURIComponent(data.path), selectedFile.name);
+  } catch (err) {
+    removeSpinner();
+    addLine('Upload failed: ' + err.message, 'error-line');
+  }
+}
+
+// ── Run demo via SSE ──
+function runDemo(sseUrl, displayName) {
+  currentCid = null;
+  document.getElementById('inputSection').classList.add('hidden');
+  document.getElementById('resultSection').classList.add('hidden');
+  document.getElementById('terminalSection').classList.remove('hidden');
+
+  if (!document.getElementById('terminalTitle').textContent.includes(displayName)) {
+    document.getElementById('terminalTitle').textContent = 'focify demo ' + displayName;
+    terminalBody.innerHTML = '';
+  }
+
+  const prompt = document.createElement('div');
+  prompt.className = 'line';
+  const p = document.createElement('span');
+  p.className = 'prompt';
+  p.textContent = '$ ';
+  const cmd = document.createElement('span');
+  cmd.className = 'step-line';
+  cmd.textContent = 'nova demo ' + displayName;
+  prompt.appendChild(p);
+  prompt.appendChild(cmd);
+  terminalBody.appendChild(prompt);
+
+  addLine('', 'info-line');
+
+  eventSource = new EventSource(sseUrl);
+
+  eventSource.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+
+    switch (data.type) {
+      case 'step':
+        addStepLine(data.current, data.total, data.text);
+        break;
+
+      case 'progress':
+        addProgressLine(
+          data.current + (data.total ? '/' + data.total : ''),
+          data.url
+        );
+        break;
+
+      case 'rewrite':
+        addProgressLine(data.current + '/' + data.total, data.path);
+        break;
+
+      case 'success':
+        addLine('\u2714 ' + data.text, 'success-line');
+        break;
+
+      case 'error':
+        addLine('\u2718 ' + data.text, 'error-line');
+        break;
+
+      case 'info':
+        addLine(data.text, 'info-line');
+        break;
+
+      case 'deploy_complete':
+        addLine('', 'info-line');
+        addLine('\u2501\u2501\u2501 Deploy complete \u2501\u2501\u2501', 'success-line');
+        break;
+
+      case 'cid':
+        currentCid = data.cid;
+        const cidDiv = document.createElement('div');
+        cidDiv.className = 'line';
+        const cidSpan = document.createElement('span');
+        cidSpan.className = 'cid-text';
+        cidSpan.textContent = 'CID  ' + data.cid;
+        cidDiv.appendChild(cidSpan);
+        terminalBody.appendChild(cidDiv);
+        terminalBody.scrollTop = terminalBody.scrollHeight;
+        break;
+
+      case 'complete':
+        currentCid = data.cid;
+        const gwUrl = data.gatewayUrl || ('https://' + data.cid + '.ipfs.dweb.link/');
+
+        addLine('', 'info-line');
+        addLine('\u2501\u2501\u2501 Deploy complete \u2501\u2501\u2501', 'success-line');
+        addLine('', 'info-line');
+
+        const cidLine = document.createElement('div');
+        cidLine.className = 'line';
+        const cs = document.createElement('span');
+        cs.className = 'cid-text';
+        cs.textContent = 'CID  ' + data.cid;
+        cidLine.appendChild(cs);
+        terminalBody.appendChild(cidLine);
+
+        addLine('', 'info-line');
+        addLine(gwUrl, 'url-text');
+
+        // Show result card
+        showResult(data.cid, gwUrl, data.dwebUrl);
+        break;
+
+      case 'done':
+        eventSource.close();
+        eventSource = null;
+        break;
+    }
+  };
+
+  eventSource.onerror = function() {
+    eventSource.close();
+    eventSource = null;
+    addLine('Connection lost', 'error-line');
+  };
+}
+
+// ── Show result ──
+function showResult(cid, gwUrl, dwebUrl) {
+  document.getElementById('resultSection').classList.remove('hidden');
+  document.getElementById('resultCid').textContent = cid;
+  const urlEl = document.getElementById('resultUrl');
+  urlEl.textContent = gwUrl;
+  urlEl.href = gwUrl;
+  const dwebEl = document.getElementById('resultDwebUrl');
+  dwebUrl = dwebUrl || ('https://' + cid + '.ipfs.dweb.link/');
+  dwebEl.textContent = dwebUrl;
+  dwebEl.href = dwebUrl;
+  document.getElementById('visitBtn').href = gwUrl;
+}
+
+// ── Copy to clipboard ──
+function copyText(elId) {
+  const el = document.getElementById(elId);
+  const text = el.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = el.parentElement.querySelector('.copy-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 1500);
+  });
+}
+
+// ── ENS pointing ──
+function pointEns() {
+  const name = document.getElementById('ensInput').value.trim();
+  if (!name || !currentCid) return;
+
+  // Open the ENS update page with pre-filled params
+  const ensUrl = 'https://ens.focify.eth.limo/?name=' + encodeURIComponent(name) + '&cid=' + encodeURIComponent(currentCid);
+  window.open(ensUrl, '_blank');
+
+  const status = document.getElementById('ensStatus');
+  status.innerHTML = '';
+  const div = document.createElement('div');
+  div.className = 'line';
+  div.style.cssText = 'margin-top:12px;font-size:13px;color:#6B7280';
+  div.textContent = 'Sign the transaction in the wallet page that just opened. Once confirmed, your site will be at ' + name.replace(/\.eth$/, '') + '.eth.limo';
+  status.appendChild(div);
+}
+
+// ── Reset (start over) ──
+function resetAll() {
+  document.getElementById('inputSection').classList.remove('hidden');
+  document.getElementById('terminalSection').classList.add('hidden');
+  document.getElementById('resultSection').classList.add('hidden');
+  document.getElementById('urlInput').value = '';
+  terminalBody.innerHTML = '';
+  currentCid = null;
+  if (eventSource) { eventSource.close(); eventSource = null; }
+}
+</script>
+</body>
+</html>
