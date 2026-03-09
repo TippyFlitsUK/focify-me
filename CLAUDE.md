@@ -6,9 +6,9 @@ Web frontend for Nova demo mode. Users enter a URL or upload an archive, the ser
 ## Architecture
 - **server.js** -- Express 5 server, spawns `npx filecoin-nova demo` as subprocess
 - **public/index.html** -- Single-page frontend, SSE client, terminal-style progress display, inline ENS
-- **public/ens.html** -- Standalone ENS page (register, update, subdomain)
-- **public/session.html** -- Session key creation via MetaMask on Filecoin
-- **public/fil-sign.html** -- Generic Filecoin transaction signing via MetaMask
+- **public/ens/index.html** -- Standalone ENS page (register, update, subdomain)
+- **public/session/index.html** -- Session key creation via MetaMask on Filecoin
+- **public/fil-sign/index.html** -- Generic Filecoin transaction signing via MetaMask
 - **public/focify.png** -- Logo
 
 ## Endpoints
