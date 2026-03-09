@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FOCify.ME - Website to Filecoin in seconds</title>
+<link rel="icon" type="image/png" href="focify.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -112,7 +113,7 @@ h1,h2,h3{font-family:'Sora','Inter',system-ui,sans-serif}
 }
 .terminal-body{
   padding:20px;font-family:'JetBrains Mono',monospace;font-size:13px;
-  line-height:1.8;color:#CBD5E1;min-height:200px;max-height:400px;overflow-y:auto;
+  line-height:1.8;color:#CBD5E1;height:400px;overflow-y:auto;
   scrollbar-width:none;-ms-overflow-style:none;
 }
 .terminal-body::-webkit-scrollbar{display:none}
@@ -125,6 +126,7 @@ h1,h2,h3{font-family:'Sora','Inter',system-ui,sans-serif}
 .terminal-body .info-line{color:#94A3B8}
 .terminal-body .url-text{color:var(--light-blue);opacity:.7}
 .terminal-body .cid-text{color:#A78BFA}
+.terminal-body .section-line{color:var(--light-blue);font-weight:500}
 
 /* Spinner */
 .spinner{
@@ -136,16 +138,12 @@ h1,h2,h3{font-family:'Sora','Inter',system-ui,sans-serif}
 
 /* ── Result card ── */
 .result-section{
-  max-width:900px;margin:0 auto;padding:0 24px 48px;width:100%;
-}
-.result-grid{
-  display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:stretch;
+  max-width:640px;margin:0 auto;padding:0 24px 48px;width:100%;
 }
 .result-card{
   background:var(--card-bg);border:1px solid var(--border);
   border-radius:var(--radius-lg);padding:32px;
   animation:slideUp .4s ease;
-  display:flex;flex-direction:column;
 }
 @keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 
@@ -183,9 +181,8 @@ h1,h2,h3{font-family:'Sora','Inter',system-ui,sans-serif}
 /* ── ENS section ── */
 .ens-card{
   background:var(--card-bg);border:1px solid var(--border);
-  border-radius:var(--radius-lg);padding:32px;
+  border-radius:var(--radius-lg);padding:32px;margin-top:24px;
   animation:slideUp .4s ease .2s both;
-  display:flex;flex-direction:column;
 }
 .ens-card h2{font-size:18px;margin-bottom:8px}
 .ens-card .subtitle{color:var(--secondary);font-size:14px;margin-bottom:20px}
@@ -230,7 +227,6 @@ footer .links{display:flex;justify-content:center;gap:24px;margin-bottom:12px}
   .url-form{flex-direction:column}
   .ens-form{flex-direction:column}
   .how-grid{grid-template-columns:1fr}
-  .result-grid{grid-template-columns:1fr}
   .hero{padding:32px 16px 0}
 }
 
@@ -297,7 +293,6 @@ footer .links{display:flex;justify-content:center;gap:24px;margin-bottom:12px}
 
 <!-- ── Result ── -->
 <section class="result-section hidden" id="resultSection">
-  <div class="result-grid">
     <div class="result-card">
       <h2>Your site is live</h2>
       <div class="result-row">
@@ -322,13 +317,25 @@ footer .links{display:flex;justify-content:center;gap:24px;margin-bottom:12px}
     <div class="ens-card">
       <h2>Point an ENS domain</h2>
       <p class="subtitle">Optional -- give your site a human-readable .eth.limo address</p>
-      <div class="ens-form">
-        <input type="text" class="ens-input" id="ensInput" placeholder="mysite.eth">
-        <button class="ens-btn" id="ensBtn" onclick="pointEns()">Update ENS</button>
+      <div id="ensInputSection">
+        <div class="ens-form">
+          <input type="text" class="ens-input" id="ensInput" placeholder="mysite.eth">
+          <button class="ens-btn" id="ensConnectBtn" onclick="ensConnect()">Connect Wallet</button>
+        </div>
+      </div>
+      <div id="ensSignSection" class="hidden">
+        <p style="font-size:13px;color:var(--secondary);margin-bottom:12px">Connected as <span id="ensWalletAddr" style="font-family:'JetBrains Mono',monospace;font-size:12px"></span></p>
+        <button class="ens-btn" style="width:100%" id="ensSignBtn" onclick="ensSign()">Update ENS Contenthash</button>
+      </div>
+      <div id="ensResultSection" class="hidden">
+        <div style="background:#ecfdf5;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin-top:12px">
+          <p style="color:#065f46;font-weight:600;margin-bottom:8px">ENS Updated</p>
+          <p style="font-size:13px;color:#065f46">Your site is now at <a id="ensLimoLink" href="#" target="_blank" style="color:#047857;font-weight:600"></a></p>
+          <p style="font-size:12px;color:#6B7280;margin-top:8px;font-family:'JetBrains Mono',monospace;word-break:break-all" id="ensTxHash"></p>
+        </div>
       </div>
       <div id="ensStatus"></div>
     </div>
-  </div>
 </section>
 
 <!-- ── How it works ── -->
@@ -579,6 +586,10 @@ function runDemo(sseUrl, displayName) {
         addLine('\u2718 ' + data.text, 'error-line');
         break;
 
+      case 'section':
+        addLine(data.text, 'section-line');
+        break;
+
       case 'info':
         addLine(data.text, 'info-line');
         break;
@@ -662,22 +673,182 @@ function copyText(elId) {
   });
 }
 
-// ── ENS pointing ──
-function pointEns() {
-  const name = document.getElementById('ensInput').value.trim();
-  if (!name || !currentCid) return;
+// ── ENS pointing (inline wallet signing) ──
+const ENS_REGISTRY = '0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e';
+const PUBLIC_RESOLVER = '0x231b0Ee14048e9dCcD1d247744d114a4EB5E8E63';
+const RESOLVER_ABI = [
+  'function setContenthash(bytes32 node, bytes calldata hash) external',
+  'function contenthash(bytes32 node) external view returns (bytes)'
+];
+const REGISTRY_ABI = [
+  'function resolver(bytes32 node) external view returns (address)',
+  'function owner(bytes32 node) external view returns (address)',
+  'function setSubnodeRecord(bytes32 node, bytes32 label, address owner, address resolver, uint64 ttl) external'
+];
+const NAME_WRAPPER = '0xD4416b13d2b3a9aBae7AcD5D6C2BbDBE25686401';
+const NAME_WRAPPER_ABI = [
+  'function ownerOf(uint256 id) external view returns (address)',
+  'function setSubnodeRecord(bytes32 parentNode, string calldata label, address owner, address resolver, uint64 ttl, uint32 fuses, uint64 expiry) external returns (bytes32)'
+];
 
-  // Open the ENS update page with pre-filled params
-  const ensUrl = 'https://ens.focify.eth.limo/?name=' + encodeURIComponent(name) + '&cid=' + encodeURIComponent(currentCid);
-  window.open(ensUrl, '_blank');
+let ensWalletAddress = null;
 
-  const status = document.getElementById('ensStatus');
-  status.innerHTML = '';
+function base32Decode(input) {
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz234567';
+  let bits = 0, value = 0, output = [];
+  for (let i = 0; i < input.length; i++) {
+    const idx = alphabet.indexOf(input[i]);
+    if (idx === -1) continue;
+    value = (value << 5) | idx;
+    bits += 5;
+    if (bits >= 8) { output.push((value >>> (bits - 8)) & 0xff); bits -= 8; }
+  }
+  return new Uint8Array(output);
+}
+
+function base58Decode(input) {
+  const alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+  let result = [0];
+  for (let i = 0; i < input.length; i++) {
+    const idx = alphabet.indexOf(input[i]);
+    if (idx === -1) throw new Error('Invalid base58 character');
+    let carry = idx;
+    for (let j = 0; j < result.length; j++) { carry += result[j] * 58; result[j] = carry & 0xff; carry >>= 8; }
+    while (carry > 0) { result.push(carry & 0xff); carry >>= 8; }
+  }
+  for (let i = 0; i < input.length && input[i] === '1'; i++) result.push(0);
+  return new Uint8Array(result.reverse());
+}
+
+function encodeIpfsContenthash(cidStr) {
+  let cidBytes;
+  if (cidStr.startsWith('bafy') || cidStr.startsWith('bafk')) {
+    cidBytes = base32Decode(cidStr.slice(1));
+  } else if (cidStr.startsWith('Qm')) {
+    const decoded = base58Decode(cidStr);
+    const v1 = new Uint8Array(2 + decoded.length);
+    v1[0] = 0x01; v1[1] = 0x70; v1.set(decoded, 2);
+    cidBytes = v1;
+  } else {
+    throw new Error('Unsupported CID format');
+  }
+  const encoded = new Uint8Array(2 + cidBytes.length);
+  encoded[0] = 0xe3; encoded[1] = 0x01; encoded.set(cidBytes, 2);
+  return '0x' + Array.from(encoded).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function loadEthers() {
+  return new Promise((resolve, reject) => {
+    if (window.ethers) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js';
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+function ensShowStatus(type, msg) {
+  const el = document.getElementById('ensStatus');
+  el.innerHTML = '';
   const div = document.createElement('div');
-  div.className = 'line';
-  div.style.cssText = 'margin-top:12px;font-size:13px;color:#6B7280';
-  div.textContent = 'Sign the transaction in the wallet page that just opened. Once confirmed, your site will be at ' + name.replace(/\.eth$/, '') + '.eth.limo';
-  status.appendChild(div);
+  div.style.cssText = 'margin-top:12px;font-size:13px;padding:10px 14px;border-radius:8px;';
+  if (type === 'error') div.style.cssText += 'background:#fef2f2;color:#991b1b;';
+  else if (type === 'pending') div.style.cssText += 'background:#fefce8;color:#854d0e;';
+  else div.style.cssText += 'background:#ecfdf5;color:#065f46;';
+  div.textContent = msg;
+  el.appendChild(div);
+}
+
+async function ensConnect() {
+  const name = document.getElementById('ensInput').value.trim();
+  if (!name || !name.includes('.eth')) { ensShowStatus('error', 'Enter a valid ENS domain'); return; }
+  if (!currentCid) { ensShowStatus('error', 'No CID available -- deploy first'); return; }
+  if (!window.ethereum) { ensShowStatus('error', 'MetaMask not found. Please install MetaMask.'); return; }
+
+  const btn = document.getElementById('ensConnectBtn');
+  btn.disabled = true; btn.textContent = 'Connecting...';
+
+  try {
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    ensWalletAddress = accounts[0];
+    try {
+      await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x1' }] });
+    } catch { ensShowStatus('error', 'Please switch to Ethereum mainnet'); btn.disabled = false; btn.textContent = 'Connect Wallet'; return; }
+
+    document.getElementById('ensWalletAddr').textContent = ensWalletAddress.slice(0, 8) + '...' + ensWalletAddress.slice(-6);
+    document.getElementById('ensInputSection').classList.add('hidden');
+    document.getElementById('ensSignSection').classList.remove('hidden');
+    document.getElementById('ensStatus').innerHTML = '';
+  } catch (err) {
+    ensShowStatus('error', err.message || 'Failed to connect');
+    btn.disabled = false; btn.textContent = 'Connect Wallet';
+  }
+}
+
+async function ensSign() {
+  const btn = document.getElementById('ensSignBtn');
+  btn.disabled = true; btn.textContent = 'Waiting for signature...';
+  ensShowStatus('pending', 'Please confirm the transaction in your wallet...');
+
+  try {
+    await loadEthers();
+    const ensName = document.getElementById('ensInput').value.trim();
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const node = ethers.namehash(ensName);
+
+    // Handle subdomains
+    if (ensName.split('.').length > 2) {
+      const registry = new ethers.Contract(ENS_REGISTRY, REGISTRY_ABI, provider);
+      const currentOwner = await registry.owner(node);
+      const signerAddr = await signer.getAddress();
+      if (currentOwner === ethers.ZeroAddress || (currentOwner.toLowerCase() !== signerAddr.toLowerCase() && currentOwner.toLowerCase() !== NAME_WRAPPER.toLowerCase())) {
+        const parts = ensName.split('.');
+        const label = parts[0];
+        const parentNode = ethers.namehash(parts.slice(1).join('.'));
+        const parentOwner = await registry.owner(parentNode);
+        if (parentOwner.toLowerCase() === NAME_WRAPPER.toLowerCase()) {
+          const nw = new ethers.Contract(NAME_WRAPPER, NAME_WRAPPER_ABI, signer);
+          ensShowStatus('pending', 'Creating subdomain...');
+          const tx = await nw.setSubnodeRecord(parentNode, label, signerAddr, PUBLIC_RESOLVER, 0, 0, 0);
+          await tx.wait();
+        } else if (parentOwner.toLowerCase() === signerAddr.toLowerCase()) {
+          const labelHash = ethers.keccak256(ethers.toUtf8Bytes(label));
+          const reg = new ethers.Contract(ENS_REGISTRY, REGISTRY_ABI, signer);
+          ensShowStatus('pending', 'Creating subdomain...');
+          const tx = await reg.setSubnodeRecord(parentNode, labelHash, signerAddr, PUBLIC_RESOLVER, 0);
+          await tx.wait();
+        }
+      }
+    }
+
+    // Get resolver
+    const registry = new ethers.Contract(ENS_REGISTRY, REGISTRY_ABI, provider);
+    const resolverAddr = await registry.resolver(node);
+    if (!resolverAddr || resolverAddr === ethers.ZeroAddress) {
+      throw new Error('No resolver found for ' + ensName + '. Set one at app.ens.domains.');
+    }
+
+    const contenthash = encodeIpfsContenthash(currentCid);
+    ensShowStatus('pending', 'Sending transaction...');
+    const resolver = new ethers.Contract(resolverAddr, RESOLVER_ABI, signer);
+    const tx = await resolver.setContenthash(node, contenthash);
+    ensShowStatus('pending', 'Waiting for confirmation...');
+    await tx.wait();
+
+    // Show result
+    const limoUrl = ensName + '.limo';
+    document.getElementById('ensSignSection').classList.add('hidden');
+    document.getElementById('ensResultSection').classList.remove('hidden');
+    document.getElementById('ensLimoLink').textContent = limoUrl;
+    document.getElementById('ensLimoLink').href = 'https://' + limoUrl;
+    document.getElementById('ensTxHash').textContent = 'tx: ' + tx.hash;
+    document.getElementById('ensStatus').innerHTML = '';
+  } catch (err) {
+    ensShowStatus('error', err.message || 'Transaction failed');
+    btn.disabled = false; btn.textContent = 'Update ENS Contenthash';
+  }
 }
 
 // ── Reset (start over) ──

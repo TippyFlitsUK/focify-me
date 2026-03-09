@@ -70,6 +70,28 @@ function parseLine(raw) {
     return { type: "rewrite", current: +rewriteMatch[1], total: +rewriteMatch[2], path: rewriteMatch[3] };
   }
 
+  // Box-drawing section borders: ┏━━ header ━━ and ┗━━
+  if (/^[┏┗]━/.test(line)) {
+    const header = line.replace(/[┏┗━┓┛]/g, "").trim();
+    return header ? { type: "section", text: header } : null;
+  }
+  // Box-drawing content lines: strip ┃ prefix and re-parse inner content
+  if (line.startsWith("┃")) {
+    const inner = line.slice(1).trim();
+    if (!inner) return null;
+    // Re-run through the same parsing logic on the inner content
+    if (inner.startsWith("✔") || inner.startsWith("✓")) {
+      return { type: "success", text: inner.slice(1).trim() };
+    }
+    if (inner.startsWith("✘")) {
+      return { type: "error", text: inner.slice(1).trim() };
+    }
+    if (/^https?:\/\//.test(inner) || /^ipfs:\/\//.test(inner)) {
+      return { type: "info", text: inner, isUrl: true };
+    }
+    return { type: "info", text: inner };
+  }
+
   // Deploy complete line with CID
   if (line.includes("Deploy complete")) {
     return { type: "deploy_complete" };
