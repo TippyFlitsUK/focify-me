@@ -1,5 +1,6 @@
 import express from "express";
 import multer from "multer";
+import Database from "better-sqlite3";
 import { spawn } from "node:child_process";
 import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -9,6 +10,33 @@ import { randomUUID } from "node:crypto";
 
 const PORT = process.env.PORT || 8090;
 const app = express();
+
+// ── SQLite tracking ──
+const DB_PATH = process.env.FOCIFY_DB || join(import.meta.dirname, "focify.db");
+const db = new Database(DB_PATH);
+db.pragma("journal_mode = WAL");
+db.exec(`
+  CREATE TABLE IF NOT EXISTS jobs (
+    id TEXT PRIMARY KEY,
+    input TEXT NOT NULL,
+    input_type TEXT NOT NULL,
+    cid TEXT,
+    gateway_url TEXT,
+    pages INTEGER,
+    status TEXT NOT NULL DEFAULT 'running',
+    error TEXT,
+    started_at TEXT NOT NULL,
+    finished_at TEXT,
+    duration_ms INTEGER
+  )
+`);
+
+const insertJob = db.prepare(
+  "INSERT INTO jobs (id, input, input_type, started_at) VALUES (?, ?, ?, ?)"
+);
+const completeJob = db.prepare(
+  "UPDATE jobs SET status = ?, cid = ?, gateway_url = ?, pages = ?, error = ?, finished_at = ?, duration_ms = ? WHERE id = ?"
+);
 
 app.use(express.json());
 app.use(express.static("public"));
@@ -111,20 +139,23 @@ function parseLine(raw) {
 const jobs = new Map();
 const JOB_TTL = 10 * 60_000; // Clean up jobs after 10 minutes
 
-function createJob(input) {
+function createJob(input, inputType) {
   const id = randomUUID();
+  const now = Date.now();
   const job = {
     id,
     input,
+    inputType,
     events: [],      // { id: number, data: object }
     nextEventId: 1,
     finished: false,
     clients: new Set(),
     child: null,
     keepalive: null,
-    createdAt: Date.now(),
+    createdAt: now,
   };
   jobs.set(id, job);
+  insertJob.run(id, input, inputType, new Date(now).toISOString());
   return job;
 }
 
@@ -195,7 +226,8 @@ app.post("/api/demo/start", (req, res) => {
   }
 
   activeJobs++;
-  const job = createJob(input);
+  const inputType = url ? "url" : "file";
+  const job = createJob(input, inputType);
 
   addEvent(job, { type: "info", text: `Starting demo for ${input}...` });
 
@@ -240,28 +272,41 @@ app.post("/api/demo/start", (req, res) => {
   child.on("close", (code) => {
     clearTimeout(jobTimer);
     activeJobs--;
+    const now = new Date().toISOString();
+    const durationMs = Date.now() - job.createdAt;
 
     let directory;
+    let cid = null;
+    let gatewayUrl = null;
+    let pages = null;
+    let error = null;
+
     if (code === 0) {
       try {
         const result = JSON.parse(stdoutBuf.trim());
         directory = result.directory;
+        cid = result.cid || null;
+        gatewayUrl = result.dwebUrl || result.gatewayUrl || null;
+        pages = result.pages || null;
         addEvent(job, { type: "complete", ...result });
       } catch {
         const cidMatch = stdoutBuf.match(/baf[a-z0-9]{50,}/);
         if (cidMatch) {
-          addEvent(job, {
-            type: "complete",
-            cid: cidMatch[0],
-            gatewayUrl: `https://${cidMatch[0]}.ipfs.dweb.link/`,
-          });
+          cid = cidMatch[0];
+          gatewayUrl = `https://${cid}.ipfs.dweb.link/`;
+          addEvent(job, { type: "complete", cid, gatewayUrl });
         } else {
-          addEvent(job, { type: "error", text: "Deploy finished but no CID found in output" });
+          error = "Deploy finished but no CID found in output";
+          addEvent(job, { type: "error", text: error });
         }
       }
     } else {
-      addEvent(job, { type: "error", text: `Deploy failed (exit code ${code})` });
+      error = `Deploy failed (exit code ${code})`;
+      addEvent(job, { type: "error", text: error });
     }
+
+    const status = cid ? "success" : "error";
+    completeJob.run(status, cid, gatewayUrl, pages, error, now, durationMs, job.id);
 
     addEvent(job, { type: "done" });
     finishJob(job);
@@ -274,6 +319,9 @@ app.post("/api/demo/start", (req, res) => {
   child.on("error", (err) => {
     clearTimeout(jobTimer);
     activeJobs--;
+    const now = new Date().toISOString();
+    const durationMs = Date.now() - job.createdAt;
+    completeJob.run("error", null, null, null, err.message, now, durationMs, job.id);
     addEvent(job, { type: "error", text: err.message });
     addEvent(job, { type: "done" });
     finishJob(job);
@@ -320,6 +368,20 @@ app.get("/api/demo/stream/:jobId", (req, res) => {
   });
 });
 
+// ── Job stats ──
+const recentJobs = db.prepare(
+  "SELECT id, input, input_type, cid, pages, status, error, started_at, finished_at, duration_ms FROM jobs ORDER BY started_at DESC LIMIT ?"
+);
+const jobStats = db.prepare(
+  "SELECT COUNT(*) as total, COUNT(cid) as successful, COUNT(*) - COUNT(cid) as failed FROM jobs"
+);
+
+app.get("/api/stats", (_req, res) => {
+  const stats = jobStats.get();
+  const recent = recentJobs.all(20);
+  res.json({ ...stats, recent });
+});
+
 // ── Legacy GET endpoint (redirect to new flow) ──
 app.get("/api/demo/stream", (req, res) => {
   res.status(410).json({ error: "Use POST /api/demo/start then GET /api/demo/stream/:jobId" });
@@ -355,6 +417,7 @@ process.on("SIGTERM", () => {
     if (activeJobs === 0) {
       clearInterval(check);
       console.log("All jobs drained, exiting.");
+      db.close();
       process.exit(0);
     }
   }, 1000);

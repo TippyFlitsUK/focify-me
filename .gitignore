@@ -1,1 +1,4 @@
 node_modules/
+focify.db
+focify.db-wal
+focify.db-shm
