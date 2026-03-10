@@ -382,17 +382,12 @@ app.get("/api/stats", (_req, res) => {
   res.json({ ...stats, recent });
 });
 
-const listJobs = db.prepare(
-  "SELECT id, input, input_type, cid, pages, status, error, started_at, finished_at, duration_ms FROM jobs ORDER BY started_at DESC LIMIT ? OFFSET ?"
+const allJobs = db.prepare(
+  "SELECT id, input, input_type, cid, pages, status, error, started_at, finished_at, duration_ms FROM jobs ORDER BY started_at DESC"
 );
-const countJobs = db.prepare("SELECT COUNT(*) as total FROM jobs");
 
-app.get("/api/jobs", (req, res) => {
-  const limit = Math.min(parseInt(req.query.limit) || 100, 1000);
-  const offset = parseInt(req.query.offset) || 0;
-  const { total } = countJobs.get();
-  const jobs = listJobs.all(limit, offset);
-  res.json({ total, limit, offset, jobs });
+app.get("/api/jobs", (_req, res) => {
+  res.json(allJobs.all());
 });
 
 // ── Legacy GET endpoint (redirect to new flow) ──
