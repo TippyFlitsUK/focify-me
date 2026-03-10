@@ -177,12 +177,34 @@ h1,h2,h3{font-family:'Sora','Inter',system-ui,sans-serif}
   font-family:inherit;text-align:center;text-decoration:none;
 }
 .visit-btn:hover{background:#059669;transform:translateY(-1px)}
-.share-btn,.tryagain-btn{
+.action-btns{display:flex;gap:10px;margin-top:12px}
+.action-btns button{
   flex:1;padding:12px;border-radius:var(--radius);font-size:14px;font-weight:600;
   cursor:pointer;font-family:inherit;transition:all .15s;
 }
-.share-btn{background:none;border:1px solid var(--border);color:var(--dark)}
-.share-btn:hover{border-color:var(--blue);color:var(--blue)}
+.copy-link-btn{background:none;border:1px solid var(--border);color:var(--dark)}
+.copy-link-btn:hover{border-color:var(--blue);color:var(--blue)}
+.share-card{
+  background:var(--card-bg);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:32px;margin-top:24px;
+  animation:slideUp .4s ease .4s both;
+}
+.share-card h2{font-size:18px;margin-bottom:8px}
+.share-card .subtitle{color:var(--secondary);font-size:14px;margin-bottom:20px}
+.share-textarea{
+  width:100%;min-height:120px;padding:16px;border:1px solid var(--border);
+  border-radius:var(--radius);font-family:'Inter',system-ui,sans-serif;font-size:14px;
+  line-height:1.6;color:var(--dark);background:#fff;resize:vertical;
+}
+.share-textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.share-post-btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+  margin-top:16px;padding:14px;border:none;border-radius:var(--radius);
+  background:#000;color:#fff;font-size:15px;font-weight:600;cursor:pointer;
+  font-family:inherit;transition:all .15s;
+}
+.share-post-btn:hover{background:#1a1a1a;transform:translateY(-1px)}
+.share-post-btn svg{width:18px;height:18px;fill:#fff}
 .tryagain-btn{background:none;border:1px solid var(--border);color:var(--secondary)}
 .tryagain-btn:hover{border-color:var(--dark);color:var(--dark)}
 .error-retry-btn{
@@ -337,8 +359,8 @@ footer .links{display:flex;justify-content:center;gap:24px;margin-bottom:12px}
         <button class="copy-btn" onclick="copyText('resultUrl')">Copy</button>
       </div>
       <a class="visit-btn" id="visitBtn" href="#" target="_blank">Visit your site</a>
-      <div style="display:flex;gap:10px;margin-top:12px">
-        <button class="share-btn" id="shareBtn" onclick="shareUrl()">Copy link to share</button>
+      <div class="action-btns">
+        <button class="copy-link-btn" onclick="copyShareLink()">Copy link</button>
         <button class="tryagain-btn" onclick="resetAll()">FOCify another site</button>
       </div>
     </div>
@@ -387,6 +409,17 @@ footer .links{display:flex;justify-content:center;gap:24px;margin-bottom:12px}
         </div>
       </div>
       <div id="ensStatus"></div>
+    </div>
+
+    <!-- Share on X -->
+    <div class="share-card">
+      <h2>Share it</h2>
+      <p class="subtitle">Let the world know your site is on the decentralized web</p>
+      <textarea class="share-textarea" id="shareMessage"></textarea>
+      <button class="share-post-btn" onclick="postToX()">
+        <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        Post to X
+      </button>
     </div>
 </section>
 
@@ -768,6 +801,7 @@ function showResult(cid, gwUrl) {
   urlEl.textContent = gwUrl;
   urlEl.href = gwUrl;
   document.getElementById('visitBtn').href = gwUrl;
+  populateShareMessage();
 }
 
 // ── Copy to clipboard ──
@@ -781,12 +815,25 @@ function copyText(elId) {
   });
 }
 
-function shareUrl() {
+function populateShareMessage() {
+  const input = document.getElementById('urlInput').value || document.getElementById('resultUrl').textContent;
+  const url = document.getElementById('resultUrl').textContent;
+  document.getElementById('shareMessage').value =
+    `I've just been FOCified!\nCheck out ${input}, now running on #Filecoin Onchain Cloud.\n\nFully decentralized hosting at a fraction of the cost.\n\nTry it yourself \u2192 focify.me\n\n${url}`;
+}
+
+function postToX() {
+  const text = document.getElementById('shareMessage').value;
+  const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}`;
+  window.open(xUrl, '_blank', 'width=550,height=420');
+}
+
+function copyShareLink() {
   const url = document.getElementById('resultUrl').textContent;
   navigator.clipboard.writeText(url).then(() => {
-    const btn = document.getElementById('shareBtn');
+    const btn = document.querySelector('.copy-link-btn');
     btn.textContent = 'Copied!';
-    setTimeout(() => btn.textContent = 'Copy link to share', 1500);
+    setTimeout(() => btn.textContent = 'Copy link', 1500);
   });
 }
 
