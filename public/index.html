@@ -833,7 +833,7 @@ function loadEthers() {
 
 function ensShowStatus(type, msg) {
   const el = document.getElementById('ensStatus');
-  el.innerHTML = '';
+  el.textContent = '';
   const div = document.createElement('div');
   div.style.cssText = 'margin-top:12px;font-size:13px;padding:10px 14px;border-radius:8px;';
   if (type === 'error') div.style.cssText += 'background:#fef2f2;color:#991b1b;';

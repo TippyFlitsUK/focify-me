@@ -1,10 +1,9 @@
 import express from "express";
 import multer from "multer";
 import { spawn } from "node:child_process";
-import { mkdtemp, rm } from "node:fs/promises";
+import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, extname } from "node:path";
-import { createReadStream } from "node:fs";
+import { join, extname, resolve } from "node:path";
 import { createInterface } from "node:readline";
 import { randomUUID } from "node:crypto";
 
@@ -31,7 +30,7 @@ const upload = multer({
 
 // Strip ANSI escape codes
 function stripAnsi(str) {
-  return str.replace(/\x1b\[[0-9;]*m/g, "");
+  return str.replace(/\x1b\[[\x20-\x3f]*[a-zA-Z]/g, "").replace(/\x1b\][^\x07]*\x07/g, "");
 }
 
 // Parse a line of Nova CLI output into a structured event
@@ -188,7 +187,7 @@ app.post("/api/demo/start", (req, res) => {
   // Validate uploaded file path -- must be in the uploads temp dir
   if (filePath) {
     const uploadsDir = join(tmpdir(), "focify-uploads");
-    const resolved = join(filePath);
+    const resolved = resolve(filePath);
     if (!resolved.startsWith(uploadsDir)) {
       res.status(400).json({ error: "Invalid file path" });
       return;
