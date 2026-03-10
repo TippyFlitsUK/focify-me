@@ -177,6 +177,20 @@ h1,h2,h3{font-family:'Sora','Inter',system-ui,sans-serif}
   font-family:inherit;text-align:center;text-decoration:none;
 }
 .visit-btn:hover{background:#059669;transform:translateY(-1px)}
+.share-btn,.tryagain-btn{
+  flex:1;padding:12px;border-radius:var(--radius);font-size:14px;font-weight:600;
+  cursor:pointer;font-family:inherit;transition:all .15s;
+}
+.share-btn{background:none;border:1px solid var(--border);color:var(--dark)}
+.share-btn:hover{border-color:var(--blue);color:var(--blue)}
+.tryagain-btn{background:none;border:1px solid var(--border);color:var(--secondary)}
+.tryagain-btn:hover{border-color:var(--dark);color:var(--dark)}
+.error-retry-btn{
+  display:inline-block;margin-top:16px;padding:12px 28px;border:none;border-radius:var(--radius);
+  background:var(--blue);color:#fff;font-size:15px;font-weight:600;cursor:pointer;
+  font-family:inherit;transition:all .15s;
+}
+.error-retry-btn:hover{background:#1D4ED8}
 
 /* ── ENS section ── */
 .ens-card{
@@ -323,6 +337,10 @@ footer .links{display:flex;justify-content:center;gap:24px;margin-bottom:12px}
         <button class="copy-btn" onclick="copyText('resultUrl')">Copy</button>
       </div>
       <a class="visit-btn" id="visitBtn" href="#" target="_blank">Visit your site</a>
+      <div style="display:flex;gap:10px;margin-top:12px">
+        <button class="share-btn" id="shareBtn" onclick="shareUrl()">Copy link to share</button>
+        <button class="tryagain-btn" onclick="resetAll()">FOCify another site</button>
+      </div>
     </div>
 
     <!-- ENS -->
@@ -550,6 +568,8 @@ async function startDemo(e) {
   e.preventDefault();
   const url = document.getElementById('urlInput').value.trim();
   if (!url) return;
+  const btn = document.getElementById('goBtn');
+  btn.disabled = true; btn.textContent = 'Starting...';
   try {
     const resp = await fetch('/api/demo/start', {
       method: 'POST',
@@ -559,12 +579,15 @@ async function startDemo(e) {
     if (!resp.ok) {
       const err = await resp.json();
       alert(err.error || 'Failed to start');
+      btn.disabled = false; btn.textContent = 'FOCify';
       return;
     }
     const { jobId } = await resp.json();
+    btn.disabled = false; btn.textContent = 'FOCify';
     runDemo('/api/demo/stream/' + jobId, url);
   } catch (err) {
     alert('Failed to start: ' + err.message);
+    btn.disabled = false; btn.textContent = 'FOCify';
   }
 }
 
@@ -717,6 +740,18 @@ function runDemo(sseUrl, displayName) {
       case 'done':
         eventSource.close();
         eventSource = null;
+        // If no result was shown, deploy failed -- show retry button
+        if (!currentCid) {
+          const retryDiv = document.createElement('div');
+          retryDiv.style.textAlign = 'center';
+          const retryBtn = document.createElement('button');
+          retryBtn.className = 'error-retry-btn';
+          retryBtn.textContent = 'Try again';
+          retryBtn.onclick = resetAll;
+          retryDiv.appendChild(retryBtn);
+          terminalBody.appendChild(retryDiv);
+          terminalBody.scrollTop = terminalBody.scrollHeight;
+        }
         break;
     }
   };
@@ -743,6 +778,15 @@ function copyText(elId) {
     const btn = el.parentElement.querySelector('.copy-btn');
     btn.textContent = 'Copied!';
     setTimeout(() => btn.textContent = 'Copy', 1500);
+  });
+}
+
+function shareUrl() {
+  const url = document.getElementById('resultUrl').textContent;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('shareBtn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy link to share', 1500);
   });
 }
 
@@ -1100,6 +1144,18 @@ function resetAll() {
   document.getElementById('urlInput').value = '';
   terminalBody.innerHTML = '';
   currentCid = null;
+  ensWalletAddress = null;
+  ensMode = null;
+  ensSecret = null;
+  // Reset ENS UI sections
+  document.getElementById('ensInputSection').classList.remove('hidden');
+  document.getElementById('ensRegisterSection').classList.add('hidden');
+  document.getElementById('ensCountdownSection').classList.add('hidden');
+  document.getElementById('ensSignSection').classList.add('hidden');
+  document.getElementById('ensResultSection').classList.add('hidden');
+  document.getElementById('ensStatus').textContent = '';
+  const ensBtn = document.getElementById('ensConnectBtn');
+  ensBtn.disabled = false; ensBtn.textContent = 'Connect Wallet';
   if (eventSource) { eventSource.close(); eventSource = null; }
 }
 </script>
