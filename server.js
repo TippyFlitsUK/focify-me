@@ -186,7 +186,7 @@ function finishJob(job) {
 
 // Active jobs (limit concurrency)
 let activeJobs = 0;
-const MAX_JOBS = 10;
+const MAX_JOBS = 25;
 const JOB_TIMEOUT = 10 * 60_000; // Kill subprocess after 10 minutes
 
 // ── Start a job ──
