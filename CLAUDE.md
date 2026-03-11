@@ -45,7 +45,7 @@ npm run dev    # node --watch server.js
 ```
 
 ## Concurrency
-- Max 10 concurrent demo jobs
-- Subprocess timeout: 10 minutes (prevents hung jobs blocking slots)
+- Max 25 concurrent demo jobs
+- No subprocess timeout -- jobs run until completion
 - Graceful shutdown: SIGTERM drains in-flight jobs before exiting
 - Client disconnect does NOT kill subprocess (job continues for reconnect)

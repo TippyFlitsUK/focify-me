@@ -187,7 +187,6 @@ function finishJob(job) {
 // Active jobs (limit concurrency)
 let activeJobs = 0;
 const MAX_JOBS = 25;
-const JOB_TIMEOUT = 10 * 60_000; // Kill subprocess after 10 minutes
 
 // ── Start a job ──
 app.post("/api/demo/start", (req, res) => {
@@ -249,13 +248,6 @@ app.post("/api/demo/start", (req, res) => {
   job.child = child;
   let stdoutBuf = "";
 
-  // Kill subprocess if it runs too long (prevents hung jobs blocking slots)
-  const jobTimer = setTimeout(() => {
-    if (!job.finished) {
-      addEvent(job, { type: "error", text: "Job timed out after 10 minutes" });
-      child.kill("SIGTERM");
-    }
-  }, JOB_TIMEOUT);
 
   const rl = createInterface({ input: child.stderr });
   rl.on("line", (raw) => {
@@ -270,7 +262,7 @@ app.post("/api/demo/start", (req, res) => {
   });
 
   child.on("close", (code) => {
-    clearTimeout(jobTimer);
+
     activeJobs--;
     const now = new Date().toISOString();
     const durationMs = Date.now() - job.createdAt;
@@ -317,7 +309,7 @@ app.post("/api/demo/start", (req, res) => {
   });
 
   child.on("error", (err) => {
-    clearTimeout(jobTimer);
+
     activeJobs--;
     const now = new Date().toISOString();
     const durationMs = Date.now() - job.createdAt;
