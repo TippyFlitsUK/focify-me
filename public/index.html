@@ -127,6 +127,11 @@ h1,h2,h3{font-family:'Sora','Inter',system-ui,sans-serif}
 .terminal-body .url-text{color:var(--light-blue);opacity:.7}
 .terminal-body .cid-text{color:#A78BFA}
 .terminal-body .section-line{color:var(--light-blue);font-weight:500}
+.terminal-body .phase-line{color:#FBBF24;font-weight:500}
+.terminal-body .upload-bar{display:flex;align-items:center;gap:8px;color:#94A3B8}
+.terminal-body .upload-bar .bar-track{width:120px;height:6px;background:rgba(56,189,248,.15);border-radius:3px;overflow:hidden}
+.terminal-body .upload-bar .bar-fill{height:100%;background:var(--light-blue);border-radius:3px;transition:width .3s ease}
+.terminal-body .upload-bar .bar-pct{color:var(--light-blue);font-weight:500;min-width:32px}
 
 /* Spinner */
 .spinner{
@@ -576,6 +581,26 @@ function addProgressLine(text, urlStr) {
   terminalBody.scrollTop = terminalBody.scrollHeight;
 }
 
+function updateUploadBar(pct, detail) {
+  let bar = document.getElementById('uploadBarLine');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.className = 'line upload-bar';
+    bar.id = 'uploadBarLine';
+    bar.innerHTML = '<span class="bar-pct"></span><span class="bar-track"><span class="bar-fill"></span></span><span class="info-line"></span>';
+    terminalBody.appendChild(bar);
+  }
+  bar.querySelector('.bar-pct').textContent = pct + '%';
+  bar.querySelector('.bar-fill').style.width = pct + '%';
+  bar.querySelector('.info-line').textContent = detail || '';
+  terminalBody.scrollTop = terminalBody.scrollHeight;
+}
+
+function removeUploadBar() {
+  const bar = document.getElementById('uploadBarLine');
+  if (bar) bar.remove();
+}
+
 function addSpinner(text) {
   const div = document.createElement('div');
   div.className = 'line';
@@ -724,6 +749,15 @@ function runDemo(sseUrl, displayName) {
 
       case 'section':
         addLine(data.text, 'section-line');
+        break;
+
+      case 'upload_progress':
+        updateUploadBar(data.pct, data.detail);
+        break;
+
+      case 'upload_phase':
+        removeUploadBar();
+        addLine(data.text, 'phase-line');
         break;
 
       case 'info':

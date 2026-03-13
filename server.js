@@ -116,6 +116,24 @@ function parseLine(raw) {
     if (/^https?:\/\//.test(inner) || /^ipfs:\/\//.test(inner)) {
       return { type: "info", text: inner, isUrl: true };
     }
+    // Upload progress: "Uploading: 45% (12.3 MB / 27.1 MB)"
+    const uploadMatch = inner.match(/^Uploading:\s+(\d+)%\s+\((.+)\)/);
+    if (uploadMatch) {
+      return { type: "upload_progress", pct: +uploadMatch[1], detail: uploadMatch[2] };
+    }
+    // Upload lifecycle phases
+    if (inner === "Upload complete, committing on-chain...") {
+      return { type: "upload_phase", phase: "committing", text: "Committing on-chain..." };
+    }
+    if (inner.startsWith("Transaction sent:")) {
+      return { type: "upload_phase", phase: "tx_sent", text: inner };
+    }
+    if (inner === "Waiting for confirmation...") {
+      return { type: "upload_phase", phase: "confirming", text: "Waiting for confirmation..." };
+    }
+    if (inner === "Confirmed on-chain") {
+      return { type: "success", text: "Confirmed on-chain" };
+    }
     return { type: "info", text: inner };
   }
 
