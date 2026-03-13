@@ -363,6 +363,10 @@ footer .links{display:flex;justify-content:center;gap:24px;margin-bottom:12px}
         <span class="result-value"><a id="resultUrl" href="#" target="_blank"></a></span>
         <button class="copy-btn" onclick="copyText('resultUrl')">Copy</button>
       </div>
+      <div class="result-row" id="costRow" style="display:none">
+        <span class="result-label">Hosting</span>
+        <span class="result-value" id="resultCost"></span>
+      </div>
       <a class="visit-btn" id="visitBtn" href="#" target="_blank">Visit your site</a>
       <div class="action-btns">
         <button class="copy-link-btn" onclick="copyShareLink()">Copy link</button>
@@ -801,7 +805,7 @@ function runDemo(sseUrl, displayName) {
         addLine(gwUrl, 'url-text');
 
         // Show result card
-        showResult(data.cid, gwUrl);
+        showResult(data.cid, gwUrl, data.siteBytes);
         break;
 
       case 'done':
@@ -828,13 +832,29 @@ function runDemo(sseUrl, displayName) {
 }
 
 // ── Show result ──
-function showResult(cid, gwUrl) {
+function showResult(cid, gwUrl, siteBytes) {
   document.getElementById('resultSection').classList.remove('hidden');
   document.getElementById('resultCid').textContent = cid;
   const urlEl = document.getElementById('resultUrl');
   urlEl.textContent = gwUrl;
   urlEl.href = gwUrl;
   document.getElementById('visitBtn').href = gwUrl;
+
+  // Show monthly hosting cost ($5/TiB/month)
+  const costRow = document.getElementById('costRow');
+  if (siteBytes && siteBytes > 0) {
+    const TiB = 1024 ** 4;
+    const monthlyCost = (siteBytes / TiB) * 5;
+    const sizeStr = siteBytes < 1024 * 1024
+      ? (siteBytes / 1024).toFixed(1) + ' KB'
+      : (siteBytes / (1024 * 1024)).toFixed(1) + ' MB';
+    costRow.style.display = '';
+    document.getElementById('resultCost').textContent =
+      '$' + monthlyCost.toFixed(4) + '/month (' + sizeStr + ' at $5/TiB)';
+  } else {
+    costRow.style.display = 'none';
+  }
+
   populateShareMessage();
 }
 

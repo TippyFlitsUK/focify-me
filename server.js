@@ -3,6 +3,7 @@ import multer from "multer";
 import Database from "better-sqlite3";
 import { spawn } from "node:child_process";
 import { rm } from "node:fs/promises";
+import { readdirSync, statSync, lstatSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, extname, resolve } from "node:path";
 import { createInterface } from "node:readline";
@@ -55,6 +56,24 @@ const upload = multer({
     }
   },
 });
+
+// Compute directory size in bytes (recursive)
+function dirSize(dir, seen = new Set()) {
+  let total = 0;
+  try {
+    const st = lstatSync(dir);
+    if (seen.has(st.ino)) return 0;
+    seen.add(st.ino);
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const p = join(dir, entry.name);
+      try {
+        if (entry.isDirectory()) total += dirSize(p, seen);
+        else total += statSync(p).size;
+      } catch {}
+    }
+  } catch {}
+  return total;
+}
 
 // Strip ANSI escape codes
 function stripAnsi(str) {
@@ -298,7 +317,9 @@ app.post("/api/demo/start", (req, res) => {
         cid = result.cid || null;
         gatewayUrl = result.dwebUrl || result.gatewayUrl || null;
         pages = result.pages || null;
-        addEvent(job, { type: "complete", ...result });
+        // Compute site size before directory cleanup
+        const siteBytes = directory ? dirSize(directory) : 0;
+        addEvent(job, { type: "complete", ...result, siteBytes });
       } catch {
         const cidMatch = stdoutBuf.match(/baf[a-z0-9]{50,}/);
         if (cidMatch) {
