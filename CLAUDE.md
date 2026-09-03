@@ -7,8 +7,7 @@ Web frontend for Nova demo mode. Users enter a URL or upload an archive, the ser
 - **server.js** -- Express 5 server, spawns `npx filecoin-nova demo` as subprocess
 - **public/index.html** -- Single-page frontend, SSE client, terminal-style progress display, inline ENS
 - **public/ens/index.html** -- Standalone ENS page (register, update, subdomain)
-- **public/session/index.html** -- Session key creation via MetaMask on Filecoin
-- **public/fil-sign/index.html** -- Generic Filecoin transaction signing via MetaMask
+- **public/fil-sign/index.html** -- Wallet authorization page via MetaMask on Filecoin
 - **public/focify.png** -- Logo
 
 ## Endpoints
@@ -26,7 +25,7 @@ Server stores all events per job with incrementing IDs. On reconnect, EventSourc
 - Port: 80 (Cloudflare proxies HTTPS -> HTTP)
 - PM2: `focify-me` with `kill_timeout: 600000` (10 min graceful shutdown)
 - Domain: focify.me + www.focify.me
-- Uses published `filecoin-nova` npm package via npx (no local build)
+- Runs nova via `npx -y --package filecoin-nova@latest nova` on every job, so new npm releases are picked up automatically; `filecoin-nova` is not a package.json dependency. `NOVA_CLI` in the PM2 env overrides this with a local build.
 
 ## Cloudflare DNS
 - Zone: focify.me
@@ -49,3 +48,14 @@ npm run dev    # node --watch server.js
 - No subprocess timeout -- jobs run until completion
 - Graceful shutdown: SIGTERM drains in-flight jobs before exiting
 - Client disconnect does NOT kill subprocess (job continues for reconnect)
+
+## npx Caching
+- `npx -y --package filecoin-nova` caches the first-downloaded version and never re-resolves from registry
+- MUST use `--package filecoin-nova@latest` to force registry check on every run
+- To manually clear: `rm -rf ~/.npm/_npx/*` then `npm cache clean --force`
+
+## PM2 Environment Gotchas
+- `pm2 restart` preserves env vars from the PM2 dump (~/.pm2/dump.pm2) -- even deleted env vars persist
+- Only `pm2 delete <app> && pm2 start ecosystem.config.cjs && pm2 save` clears stale env vars
+- Check current env with `pm2 env <id>` -- look for stale vars like NOVA_CLI
+- NOVA_CLI env var overrides npx and uses a local build -- if set, npx path is never used
