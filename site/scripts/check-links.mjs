@@ -19,21 +19,27 @@ const htmlFiles = [];
   }
 })(root);
 
-const attrRe = /(?:href|src)=["']([^"'#?]+)[^"']*["']/g;
+// Full attribute value minus any #fragment. Query strings stay: external URLs
+// such as Google Fonts' css2?family=... are meaningless without them.
+const attrRe = /(?:href|src)=["']([^"'#]+)(?:#[^"']*)?["']/g;
+// Resource hints are not links to pages; the browser only opens a connection.
+const hintRe = /<link[^>]*\brel=["'](?:preconnect|dns-prefetch|preload|modulepreload)["'][^>]*>/gi;
 const internalFailures = [];
 const external = new Map(); // url -> [pages]
 
 for (const file of htmlFiles) {
-  const html = readFileSync(file, "utf8");
+  const html = readFileSync(file, "utf8").replace(hintRe, "");
   for (const m of html.matchAll(attrRe)) {
-    const target = m[1];
+    let target = m[1];
     if (/^(mailto:|tel:|data:|javascript:)/.test(target)) continue;
     if (/^https?:\/\//.test(target)) {
       if (!external.has(target)) external.set(target, []);
       external.get(target).push(file.slice(root.length + 1));
       continue;
     }
-    // Internal: resolve relative to the page, then to a file or a dir index.
+    // Internal: drop any query string, resolve relative to the page, then to
+    // a file or a directory index.
+    target = target.split("?")[0];
     const base = target.startsWith("/") ? root : dirname(file);
     let p = resolve(base, target.startsWith("/") ? "." + target : target);
     const rel = p.startsWith(root) ? p.slice(root.length + 1) : p;
