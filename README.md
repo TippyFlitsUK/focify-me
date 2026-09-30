@@ -15,7 +15,12 @@ the Filecoin Foundation or Protocol Labs.
 - **The demo runner** (`server.js`, `public/`): the site converter, served at
   `/demo/` with its API under `/api/`.
 
-`deploy/nginx-focify.conf` is the nginx block that wires the two together.
+`deploy/nginx-focify.conf` is the nginx block that wires the two together;
+its header lists the one-time permission step nginx needs to read the static
+root from the home directory.
+
+Deploying the gallery: `npm --prefix site ci && npm --prefix site run build`
+on the box after each rsync. nginx serves `site/dist` directly, no restart.
 
 ## How the converter works
 
