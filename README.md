@@ -9,11 +9,12 @@ the Filecoin Foundation or Protocol Labs.
 
 ## Two parts
 
-- **The gallery** (`site/`): a static Astro site listing demos built on Filecoin
-  Onchain Cloud and short guides. It is served at `/` and is itself pinned to
-  FOC on every change by `.github/workflows/site.yml`. See `site/`.
-- **The demo runner** (`server.js`, `public/`): the site converter, served at
-  `/demo/` with its API under `/api/`.
+- **The converter** (`server.js`, `public/`): focify.me itself, served at `/`
+  with its API under `/api/`.
+- **The gallery** (`site/`): static Astro pages for `/demos/`, `/guides/` and
+  `/about/`, listing demos built on Filecoin Onchain Cloud and short guides.
+  `.github/workflows/site.yml` builds and link-checks them and can pin the
+  build to FOC when the publish secrets are set.
 
 `deploy/nginx-focify.conf` is the nginx block that wires the two together;
 its header lists the one-time permission step nginx needs to read the static
@@ -47,7 +48,7 @@ browser ──POST /api/demo/start──▶ server.js (Express)
 npm install                       # server deps, including filecoin-pin
 npm run build                     # builds focify-clone
 npx --prefix focify-clone playwright install --with-deps chromium   # once
-npm run dev                       # http://localhost:8090/demo/
+npm run dev                       # http://localhost:8090
 npm --prefix site run dev         # the gallery on its own dev server
 ```
 
@@ -93,7 +94,7 @@ delete and start after changing `ecosystem.config.cjs`. Check with
 
 ## Endpoints
 
-- `GET /demo/` the converter page (nginx serves the gallery at `/`)
+- `GET /` the converter page (`/demo/` is an alias); nginx serves `/demos/`, `/guides/`, `/about/` from `site/dist`
 - `POST /api/demo/start` `{ url }` or `{ file, originalName }`, returns `{ jobId }`
 - `GET /api/demo/stream/:jobId` SSE progress, reconnects via `Last-Event-ID`
 - `POST /api/upload` multipart archive upload (`.zip`, `.tar`, `.tar.gz`, `.tgz`, 500 MB max)

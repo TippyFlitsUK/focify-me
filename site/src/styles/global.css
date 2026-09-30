@@ -30,6 +30,7 @@ a:hover{text-decoration:underline}
   margin-bottom:24px;font-weight:400;
 }
 .hero .tagline span{color:var(--blue);font-weight:600}
+.hero .cta{margin:-8px 0 28px}
 .hero .nav{display:flex;justify-content:center;gap:24px;margin-bottom:40px;font-size:14px;flex-wrap:wrap}
 .hero .nav a{color:var(--secondary);font-weight:500}
 .hero .nav a:hover,.hero .nav a.active{color:var(--blue);text-decoration:none}

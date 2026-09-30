@@ -5,9 +5,10 @@ const {
   description = "Demos and guides for Filecoin Onchain Cloud, from the people who FOCify websites.",
   heading = "Website to Filecoin in seconds",
   tagline,
+  cta,          // optional { href, label } primary button under the tagline
   section = "",
 } = Astro.props;
-const fullTitle = title ? `${title} - FOCify.ME` : "FOCify.ME - Website to Filecoin in seconds";
+const fullTitle = title ? `${title} - FOCify.ME` : "FOCify.ME - See Filecoin Onchain Cloud working";
 // Document-relative links so the build works on subdomain and path gateways.
 const depth = Astro.url.pathname.split("/").filter(Boolean).length;
 const root = depth ? "../".repeat(depth) : "./";
@@ -29,8 +30,9 @@ const root = depth ? "../".repeat(depth) : "./";
   <a href={root}><img src={`${root}focify.png`} alt="FOCify.ME"></a>
   <h1>{heading}</h1>
   {tagline ? <p class="tagline"><Fragment set:html={tagline} /></p> : <p class="tagline">Enter any URL and watch it go live on <span>Filecoin Onchain Cloud</span></p>}
+  {cta && <p class="cta"><a class="focify-btn" href={cta.href}>{cta.label}</a></p>}
   <nav class="nav">
-    <a href={`${root}demo/`} class={section === "demo" ? "active" : ""}>FOCify a site</a>
+    <a href={`${root}`}>FOCify a site</a>
     <a href={`${root}demos/`} class={section === "demos" ? "active" : ""}>Demos</a>
     <a href={`${root}guides/`} class={section === "guides" ? "active" : ""}>Guides</a>
     <a href={`${root}about/`} class={section === "about" ? "active" : ""}>About</a>

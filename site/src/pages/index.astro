@@ -3,18 +3,18 @@ import Base from "../layouts/Base.astro";
 import DemoCard from "../components/DemoCard.astro";
 import GuideCard from "../components/GuideCard.astro";
 import { getCollection } from "astro:content";
-const demos = (await getCollection("demos")).filter((d) => d.data.status === "live").sort((a, b) => a.data.order - b.data.order);
+// The converter has its own button in the hero, so the grid lists the others.
+const demos = (await getCollection("demos")).filter((d) => d.data.status === "live" && d.id !== "site-converter").sort((a, b) => a.data.order - b.data.order);
 const guides = (await getCollection("guides")).sort((a, b) => a.data.order - b.data.order);
 ---
-<Base tagline="Working demos and short guides for <span>Filecoin Onchain Cloud</span>">
-  <section class="focified-section" style="padding-bottom:32px;text-align:center">
-    <a class="focify-btn" href="./demo/">FOCify a website</a>
-    <p class="subtitle" style="margin:12px 0 0">Paste a URL, get a copy of the site on Filecoin. Free on the calibration testnet.</p>
-  </section>
-
+<Base
+  heading="See Filecoin Onchain Cloud working"
+  tagline="Demos you can click, guides you can follow, and a converter that puts any website on <span>Filecoin Onchain Cloud</span>"
+  cta={{ href: "./demo/", label: "FOCify a website" }}
+>
   <section class="focified-section">
-    <img class="focified-logo" src="./focified.png" alt="The FOCified">
-    <p class="subtitle">Things already running on Filecoin Onchain Cloud</p>
+    <h2>Demos</h2>
+    <p class="subtitle">Working things built on Filecoin Onchain Cloud, by their authors</p>
     <div class="focified-grid">
       {demos.map((d) => <DemoCard demo={d} href={`./demos/${d.id}/`} />)}
     </div>
