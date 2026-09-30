@@ -37,7 +37,7 @@ module.exports = {
     cwd: APP_DIR,
     env: {
       NODE_ENV: "production",
-      PORT: "80",
+      PORT: "8090",   // nginx owns :80 and proxies focify.me here
       FOCIFY_NETWORK: "calibration",
       FOCIFY_COPIES: "1",
       FOCIFY_PROVIDER_ID: "9",

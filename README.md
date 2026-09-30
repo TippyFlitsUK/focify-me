@@ -50,7 +50,7 @@ git-ignored and read by `ecosystem.config.cjs` at start.
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `PORT` | 8090 | HTTP port |
+| `PORT` | 8090 | HTTP port. On the VPS nginx owns 80 and proxies focify.me to 8090 |
 | `FOCIFY_NETWORK` | calibration | `calibration` or `mainnet` |
 | `FOCIFY_COPIES` | 1 | Storage copies per upload |
 | `FOCIFY_PROVIDER_ID` | (auto) | Pin a storage provider id |
