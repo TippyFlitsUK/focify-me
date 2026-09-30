@@ -280,7 +280,7 @@ app.post("/api/demo/start", (req, res) => {
   const spawnOpts = { env: { ...process.env, FORCE_COLOR: "0" }, stdio: ["ignore", "pipe", "pipe"] };
   const child = novaCli
     ? spawn("node", [novaCli, ...args], spawnOpts)
-    : spawn("npx", ["-y", "--package", "filecoin-nova", "nova", ...args], spawnOpts);
+    : spawn("npx", ["-y", "--package", "filecoin-nova@latest", "nova", ...args], spawnOpts);
 
   job.child = child;
   let stdoutBuf = "";
