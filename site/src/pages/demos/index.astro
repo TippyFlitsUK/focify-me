@@ -1,0 +1,22 @@
+---
+import Base from "../../layouts/Base.astro";
+import { getCollection } from "astro:content";
+const demos = (await getCollection("demos")).sort((a, b) => a.data.order - b.data.order);
+---
+<Base title="Demos" description="Every demo listed on focify.me, with who built it and when it was last checked.">
+  <h1>Demos</h1>
+  <p class="lede">Each entry links to the demo where it lives. Nothing is rehosted here. The date is the last day someone confirmed it working.</p>
+  <div class="grid">
+    {demos.map((d) => (
+      <a class="card" href={`./${d.id}/`} style="text-decoration:none;color:inherit">
+        <h3>{d.data.title}</h3>
+        <p>{d.data.summary}</p>
+        <div class="meta">
+          <span class={`pill ${d.data.status}`}>{d.data.status}</span>
+          <span>by {d.data.owner}</span>
+          {d.data.verified && <span>checked {d.data.verified}</span>}
+        </div>
+      </a>
+    ))}
+  </div>
+</Base>

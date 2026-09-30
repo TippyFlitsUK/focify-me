@@ -1,0 +1,44 @@
+---
+import "../styles/global.css";
+const { title, description = "An unofficial gallery of Filecoin Onchain Cloud demos and short guides." } = Astro.props;
+const fullTitle = title ? `${title} | FOCify` : "FOCify";
+// Links are document-relative so the build works at "/" on a subdomain
+// gateway and under "/ipfs/<cid>/" on a path gateway alike.
+const depth = Astro.url.pathname.split("/").filter(Boolean).length;
+const root = depth ? "../".repeat(depth) : "./";
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" href={`${root}icon.png`} />
+  </head>
+  <body>
+    <div class="notice">
+      focify.me is a personal, unofficial project. It is not affiliated with FilOz, the Filecoin Foundation or Protocol Labs.
+    </div>
+    <header class="top">
+      <div class="wrap">
+        <a class="brand" href={root}><img src={`${root}focify.png`} alt="" /> FOCify</a>
+        <nav>
+          <a href={`${root}demos/`}>Demos</a>
+          <a href={`${root}guides/`}>Guides</a>
+          <a href={`${root}demo/`}>Try it</a>
+          <a href={`${root}about/`}>About</a>
+        </nav>
+      </div>
+    </header>
+    <main class="wrap">
+      <slot />
+    </main>
+    <footer>
+      <div class="wrap">
+        <p>Built and run by one person as a way of learning Filecoin Onchain Cloud in public. Everything listed here belongs to its author.</p>
+        <p>Not affiliated with FilOz, the Filecoin Foundation or Protocol Labs. <a href="https://github.com/TippyFlitsUK/focify-me">Source on GitHub</a>.</p>
+      </div>
+    </footer>
+  </body>
+</html>

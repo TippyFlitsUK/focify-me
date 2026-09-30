@@ -1,0 +1,32 @@
+---
+import Base from "../../layouts/Base.astro";
+import { getCollection, render } from "astro:content";
+export async function getStaticPaths() {
+  const demos = await getCollection("demos");
+  return demos.map((d) => ({ params: { id: d.id }, props: { demo: d } }));
+}
+const { demo } = Astro.props;
+const { Content } = await render(demo);
+const guides = (await getCollection("guides")).filter((g) => g.data.demo === demo.id);
+---
+<Base title={demo.data.title} description={demo.data.summary}>
+  <h1>{demo.data.title}</h1>
+  <p class="lede">{demo.data.summary}</p>
+  <p>
+    <a class="btn" href={demo.data.url} target="_blank" rel="noopener">Open the demo</a>
+    {demo.data.source && <a class="btn secondary" href={demo.data.source} target="_blank" rel="noopener">Source</a>}
+  </p>
+  <dl class="facts">
+    <dt>Built by</dt><dd>{demo.data.owner}</dd>
+    <dt>Status</dt><dd><span class={`pill ${demo.data.status}`}>{demo.data.status}</span></dd>
+    {demo.data.verified && <><dt>Last checked</dt><dd>{demo.data.verified}</dd></>}
+    {demo.data.stack.length > 0 && <><dt>Stack</dt><dd>{demo.data.stack.join(", ")}</dd></>}
+  </dl>
+  <div class="prose"><Content /></div>
+  {guides.length > 0 && (
+    <>
+      <h2>Guides for this demo</h2>
+      <ul>{guides.map((g) => <li><a href={`../../guides/${g.id}/`}>{g.data.title}</a></li>)}</ul>
+    </>
+  )}
+</Base>
