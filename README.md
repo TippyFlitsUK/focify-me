@@ -7,7 +7,17 @@ conversion plus decentralised hosting.
 focify.me is a personal, unofficial project. It is not affiliated with FilOz,
 the Filecoin Foundation or Protocol Labs.
 
-## How it works
+## Two parts
+
+- **The gallery** (`site/`): a static Astro site listing demos built on Filecoin
+  Onchain Cloud and short guides. It is served at `/` and is itself pinned to
+  FOC on every change by `.github/workflows/site.yml`. See `site/`.
+- **The demo runner** (`server.js`, `public/`): the site converter, served at
+  `/demo/` with its API under `/api/`.
+
+`deploy/nginx-focify.conf` is the nginx block that wires the two together.
+
+## How the converter works
 
 ```
 browser ──POST /api/demo/start──▶ server.js (Express)
@@ -32,7 +42,8 @@ browser ──POST /api/demo/start──▶ server.js (Express)
 npm install                       # server deps, including filecoin-pin
 npm run build                     # builds focify-clone
 npx --prefix focify-clone playwright install --with-deps chromium   # once
-npm run dev                       # http://localhost:8090
+npm run dev                       # http://localhost:8090/demo/
+npm --prefix site run dev         # the gallery on its own dev server
 ```
 
 Without credentials the crawl works and the upload step fails with a clear
@@ -77,7 +88,7 @@ delete and start after changing `ecosystem.config.cjs`. Check with
 
 ## Endpoints
 
-- `GET /` static frontend
+- `GET /demo/` the converter page (nginx serves the gallery at `/`)
 - `POST /api/demo/start` `{ url }` or `{ file, originalName }`, returns `{ jobId }`
 - `GET /api/demo/stream/:jobId` SSE progress, reconnects via `Last-Event-ID`
 - `POST /api/upload` multipart archive upload (`.zip`, `.tar`, `.tar.gz`, `.tgz`, 500 MB max)

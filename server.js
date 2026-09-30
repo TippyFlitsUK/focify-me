@@ -42,7 +42,11 @@ const completeJob = db.prepare(
 );
 
 app.use(express.json());
-app.use(express.static("public"));
+// The demo runner lives under /demo/. In production nginx serves the static
+// gallery (site/dist) at "/" and proxies /demo/ and /api/ here; locally the
+// root just redirects to the demo.
+app.use("/demo", express.static("public"));
+app.get("/", (_req, res) => res.redirect("/demo/"));
 
 // File upload to temp dir, accept .zip .tar.gz .tgz .tar
 const upload = multer({
