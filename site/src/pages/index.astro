@@ -13,8 +13,8 @@ const guides = (await getCollection("guides")).sort((a, b) => a.data.order - b.d
   cta={{ href: "./demo/", label: "FOCify a website" }}
 >
   <section class="focified-section">
-    <img class="focified-logo" src="./focified.png" alt="The FOCified">
-    <p class="subtitle">Demos already running on Filecoin Onchain Cloud</p>
+    <h2>Demos</h2>
+    <p class="subtitle">Working things built on Filecoin Onchain Cloud, by their authors</p>
     <div class="focified-grid">
       {demos.map((d) => <DemoCard demo={d} href={`./demos/${d.id}/`} />)}
     </div>
