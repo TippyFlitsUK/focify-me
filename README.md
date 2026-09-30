@@ -90,8 +90,13 @@ pm2 delete focify-me; pm2 start ecosystem.config.cjs && pm2 save
 ```
 
 `pm2 restart` keeps stale environment variables from its dump, so always
-delete and start after changing `ecosystem.config.cjs`. Check with
-`pm2 env <id>` (the numeric id from `pm2 list`).
+delete and start after changing `ecosystem.config.cjs`. Every delete and
+start gives the app a new numeric id, so resolve it rather than remembering
+it:
+
+```bash
+pm2 env "$(pm2 id focify-me | tr -d '[] ')" | grep FOCIFY_
+```
 
 ## Endpoints
 
