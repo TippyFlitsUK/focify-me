@@ -72,6 +72,7 @@ git-ignored and read by `ecosystem.config.cjs` at start.
 | `FOCIFY_COPIES` | 1 | Storage copies per upload |
 | `FOCIFY_PROVIDER_ID` | (auto) | Pin a storage provider id |
 | `FOCIFY_MAX_PAGES` | 100 | Crawl page cap |
+| `FOCIFY_PROXY_MAX_PAGES` | 20 | Crawl page cap used instead of `FOCIFY_MAX_PAGES` only when a challenge-protected site is routed through the proxy (every request goes through it, roughly 35 s a page) |
 | `FOCIFY_CREDENTIALS_FILE` | (none) | Optional dotenv file with `SESSION_KEY` and `WALLET_ADDRESS`; unset, filecoin-pin uses its saved `login` |
 | `FOCIFY_PROXY` | (none) | Residential HTTP proxy for challenge-protected sites |
 | `FOCIFY_CLONE_CLI` | `focify-clone/dist/cli.js` | Override the crawler binary |

@@ -12,6 +12,12 @@ export interface CloneConfig {
   output?: string;
   /** Max pages to crawl (default: 50) */
   maxPages?: number;
+  /**
+   * Page cap used instead of maxPages only when the crawl is routed through
+   * the proxy (every request then goes through a metered residential proxy,
+   * about 35 s a page). Direct crawls are never affected. 0 = no separate cap.
+   */
+  proxiedMaxPages?: number;
   /** Take screenshots for comparison (default: false) */
   screenshots?: boolean;
 }
@@ -37,6 +43,8 @@ export interface CloneResult {
   totalSize: number;
   /** Screenshot paths (original vs clone) */
   screenshots?: { original: string; clone: string }[];
+  /** True when the crawl went through the FOCIFY_PROXY route */
+  proxied: boolean;
 }
 
 /**
@@ -376,7 +384,7 @@ export async function clone(config: CloneConfig): Promise<CloneResult> {
         "  Then install browsers: npx playwright install chromium"
     );
   }
-  const maxPages = config.maxPages === 0 ? Infinity : (config.maxPages ?? 50);
+  let maxPages = config.maxPages === 0 ? Infinity : (config.maxPages ?? 50);
   const takeScreenshots = config.screenshots === true;
 
   // Default output: ./domain-YYYYMMDD-HHMMSS/ in current directory
@@ -434,6 +442,13 @@ export async function clone(config: CloneConfig): Promise<CloneResult> {
       if (u.username) proxyOption.username = decodeURIComponent(u.username);
       if (u.password) proxyOption.password = decodeURIComponent(u.password);
       info("  Security challenge detected -- routing clone through proxy.");
+      // A proxied crawl sends every request through a metered residential
+      // proxy, so it gets its own, smaller cap. Direct crawls keep maxPages.
+      const proxiedCap = config.proxiedMaxPages ?? 0;
+      if (proxiedCap > 0 && proxiedCap < maxPages) {
+        maxPages = proxiedCap;
+        info(`  Crawl capped at ${maxPages} pages: every request goes through the residential proxy.`);
+      }
     }
   }
 
@@ -1509,5 +1524,6 @@ export async function clone(config: CloneConfig): Promise<CloneResult> {
     totalSize,
     sourceUrl: config.url,
     screenshots,
+    proxied: proxyOption !== undefined,
   };
 }

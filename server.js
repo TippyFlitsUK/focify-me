@@ -241,6 +241,10 @@ const PIN_PROVIDER_ID = process.env.FOCIFY_PROVIDER_ID || "";
 const PIN_COPIES = process.env.FOCIFY_COPIES || "1";
 const PIN_CREDENTIALS_FILE = process.env.FOCIFY_CREDENTIALS_FILE || "";
 const MAX_PAGES = process.env.FOCIFY_MAX_PAGES || "100";
+// Smaller cap that applies only when the cloner routes a challenge-protected
+// site through the residential proxy (metered, ~35 s a page). Direct crawls
+// keep MAX_PAGES.
+const PROXY_MAX_PAGES = process.env.FOCIFY_PROXY_MAX_PAGES || "20";
 
 // Result links use the subdomain gateway form: the clone keeps links
 // root-relative, which only works when "/" is the site root.
@@ -390,6 +394,7 @@ async function runPipeline(job, { url, filePath, originalName }) {
   let siteDir = null;      // directory handed to filecoin-pin
   let cleanupDir = null;   // directory to delete afterwards
   let pages = null;
+  let proxied = false;
   let cid = null;
   let pieceCid = null;
   let dataSetId = null;
@@ -405,7 +410,7 @@ async function runPipeline(job, { url, filePath, originalName }) {
       const normalized = url.startsWith("http") ? url : `https://${url}`;
       const outDir = await mkdtemp(join(tmpdir(), "focify-clone-"));
       cleanupDir = outDir;
-      const clone = await runChild(job, process.execPath, [CLONE_CLI, normalized, "--out", outDir, "--max-pages", MAX_PAGES], {
+      const clone = await runChild(job, process.execPath, [CLONE_CLI, normalized, "--out", outDir, "--max-pages", MAX_PAGES, "--proxy-max-pages", PROXY_MAX_PAGES], {
         onStderrLine: (raw) => {
           const event = parseLine(raw);
           if (!event) return;
@@ -421,6 +426,7 @@ async function runPipeline(job, { url, filePath, originalName }) {
       const result = JSON.parse(clone.stdout.trim());
       siteDir = result.directory;
       pages = result.pages || null;
+      proxied = result.proxied === true;
     } else {
       addEvent(job, { type: "step", current: 1, total: TOTAL_STEPS, text: "Extracting archive" });
       const extracted = await extractArchive(filePath, originalName);
@@ -465,6 +471,8 @@ async function runPipeline(job, { url, filePath, originalName }) {
       dataSetId,
       ...links,
       pages,
+      proxied,
+      proxyMaxPages: proxied ? Number(PROXY_MAX_PAGES) : null,
       siteBytes,
       sourceUrl: url || originalName || null,
     });
