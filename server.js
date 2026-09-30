@@ -267,10 +267,17 @@ function runChild(job, cmd, args, { onStderrLine, onStdoutLine, env }) {
   });
 }
 
+// Lines from the upload step that must never reach visitors: anything naming
+// a server path, the credential source, or the wallet.
+function isSensitivePinLine(line) {
+  return /\/home\/|\/tmp\/|\/root\/|session\.env|^Using session|\bowner 0x|credentials/i.test(line);
+}
+
 // Parse a line of filecoin-pin (non-TTY) output into an SSE event.
 function parsePinLine(raw) {
   const line = stripAnsi(raw).trim();
   if (!line) return null;
+  if (isSensitivePinLine(line)) return null;
   if (line.startsWith("✓")) return { type: "success", text: line.slice(1).trim() };
   if (line.startsWith("✗")) return { type: "error", text: line.slice(1).trim() };
   const cidMatch = line.match(/^Root CID:\s+(\S+)/);
@@ -427,7 +434,7 @@ async function runPipeline(job, { url, filePath, originalName }) {
       },
       onStderrLine: (raw) => {
         const text = stripAnsi(raw).trim();
-        if (text) addEvent(job, { type: "info", text });
+        if (text && !isSensitivePinLine(text)) addEvent(job, { type: "info", text });
       },
     });
     if (pin.code !== 0 || !cid) {
