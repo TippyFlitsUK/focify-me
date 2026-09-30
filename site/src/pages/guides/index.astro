@@ -1,18 +1,13 @@
 ---
 import Base from "../../layouts/Base.astro";
+import GuideCard from "../../components/GuideCard.astro";
 import { getCollection } from "astro:content";
 const guides = (await getCollection("guides")).sort((a, b) => a.data.order - b.data.order);
 ---
-<Base title="Guides" description="Short walkthroughs tied to the demos, linking to the official docs for the details.">
-  <h1>Guides</h1>
-  <p class="lede">Short and practical. Each guide explains one demo and points at the official documentation for anything deeper.</p>
-  <div class="grid">
-    {guides.map((g) => (
-      <a class="card" href={`./${g.id}/`} style="text-decoration:none;color:inherit">
-        <h3>{g.data.title}</h3>
-        <p>{g.data.summary}</p>
-        <div class="meta"><span>updated {g.data.updated}</span></div>
-      </a>
-    ))}
-  </div>
+<Base title="Guides" section="guides" heading="Guides" tagline="Short walkthroughs for the demos, with links to the official <span>Filecoin Onchain Cloud</span> docs">
+  <section class="focified-section">
+    <div class="focified-grid">
+      {guides.map((g) => <GuideCard guide={g} href={`./${g.id}/`} />)}
+    </div>
+  </section>
 </Base>

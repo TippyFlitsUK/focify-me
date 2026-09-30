@@ -1,0 +1,12 @@
+---
+const { guide, href } = Astro.props;
+---
+<div class="focified-card"><a href={href}>
+  <div class="focified-info">
+    <div class="focified-name">{guide.data.title}</div>
+    <div class="focified-summary">{guide.data.summary}</div>
+    <div class="focified-stats">
+      <div class="focified-stat"><span class="label">Updated</span><span class="value">{guide.data.updated}</span></div>
+    </div>
+  </div>
+</a></div>
