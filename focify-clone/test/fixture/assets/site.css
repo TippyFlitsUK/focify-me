@@ -1,0 +1,3 @@
+body { font-family: sans-serif; background: url(/assets/bg.png) repeat; }
+@font-face { font-family: "Fx"; src: url("/assets/fx.woff2") format("woff2"); }
+h1 { font-family: "Fx", sans-serif; }

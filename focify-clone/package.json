@@ -1,0 +1,33 @@
+{
+  "name": "focify-clone",
+  "version": "0.1.0",
+  "description": "Crawl a live website with a real browser and write a static, IPFS-ready copy",
+  "type": "module",
+  "bin": {
+    "focify-clone": "./dist/cli.js"
+  },
+  "main": "./dist/clone.js",
+  "exports": {
+    ".": "./dist/clone.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc && chmod +x dist/cli.js",
+    "lint": "tsc --noEmit",
+    "test": "node test/smoke.mjs",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "playwright": "1.63.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.6.0"
+  },
+  "license": "MIT"
+}
