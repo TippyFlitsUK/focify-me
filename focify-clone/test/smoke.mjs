@@ -2,7 +2,7 @@
 // its API), crawl it with the built CLI, and assert the output contract.
 // Run with: npm test   (set FOCIFY_CHROMIUM_PATH if Playwright's own
 // Chromium is not installed).
-import { createServer } from "node:http";
+import { createServer, request as httpRequest } from "node:http";
 import { readFileSync, existsSync, readdirSync, statSync, mkdtempSync, rmSync } from "node:fs";
 import { join, extname, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -68,6 +68,25 @@ const challenge = createServer((_req, res) => {
 });
 const challengeOrigin = await listen(challenge);
 
+// Fourth origin: a forwarding HTTP proxy. Requests for the challenge origin
+// are answered by the real fixture site (a residential proxy passes the
+// challenge; this one just sidesteps it), everything else is forwarded as is.
+const proxy = createServer((req, res) => {
+  const target = new URL(req.url);
+  if (`${target.protocol}//${target.host}` === challengeOrigin) target.host = new URL(origin).host;
+  const upstream = httpRequest(
+    target,
+    { method: req.method, headers: { ...req.headers, host: target.host } },
+    (up) => {
+      res.writeHead(up.statusCode, up.headers);
+      up.pipe(res);
+    },
+  );
+  upstream.on("error", () => res.writeHead(502).end());
+  req.pipe(upstream);
+});
+const proxyOrigin = await listen(proxy);
+
 function run(args, env = {}) {
   return new Promise((resolve) => {
     const child = spawn(process.execPath, [cli, ...args], {
@@ -85,9 +104,15 @@ function run(args, env = {}) {
 const out = mkdtempSync(join(tmpdir(), "focify-clone-smoke-"));
 const main = await run([origin, "--out", out, "--max-pages", "10"]);
 const blocked = await run([challengeOrigin, "--out", join(out, "blocked")]);
+// Same challenged site with a proxy: the crawl goes through, and the proxy
+// cap (2) applies instead of --max-pages (10).
+const viaProxy = await run([challengeOrigin, "--out", join(out, "proxied"), "--max-pages", "10", "--proxy-max-pages", "2"], {
+  FOCIFY_PROXY: proxyOrigin,
+});
 api.close();
 site.close();
 challenge.close();
+proxy.close();
 
 const failures = [];
 const check = (cond, msg) => {
@@ -110,6 +135,20 @@ check(lines.some((l) => /^\d+\/\d+\s+https?:\/\//.test(l)), "stderr has n/m <url
 check(lines.some((l) => l.startsWith("✔")), "stderr has a ✔ success line");
 check(blocked.code === 3, `challenge-protected site without a proxy exits 3 (got ${blocked.code})`);
 check(/security challenge/i.test(stripAnsi(blocked.stderr)), "challenge exit explains itself on stderr");
+check(result && result.proxied === false, "direct crawl reports proxied: false");
+check(viaProxy.code === 0, `challenge-protected site with a proxy exits 0 (got ${viaProxy.code})`);
+let proxiedResult = null;
+try {
+  proxiedResult = JSON.parse(viaProxy.stdout.trim());
+} catch {
+  failures.push("proxied run: stdout is not a single JSON object");
+}
+const proxiedErr = stripAnsi(viaProxy.stderr);
+check(/routing clone through proxy/i.test(proxiedErr), "proxied run says it is routing through the proxy");
+check(/capped at 2 pages/i.test(proxiedErr), "proxied run announces the proxy page cap");
+check(proxiedResult && proxiedResult.proxied === true, "proxied run reports proxied: true");
+check(proxiedResult && proxiedResult.pages === 2, `proxied run stops at the proxy cap of 2 pages (got ${proxiedResult && proxiedResult.pages})`);
+check(result && result.pages === 3, "direct crawl is not capped by --proxy-max-pages");
 
 // Output layout
 const files = [];
@@ -157,6 +196,7 @@ if (failures.length) {
   console.error("\n--- focify-clone stderr (main run) ---\n" + stripAnsi(main.stderr));
   console.error("--- stdout ---\n" + main.stdout);
   console.error("--- focify-clone stderr (challenge run) ---\n" + stripAnsi(blocked.stderr));
+  console.error("--- focify-clone stderr (proxied run) ---\n" + stripAnsi(viaProxy.stderr));
   process.exit(1);
 }
 console.log(`SMOKE TEST PASSED (${files.length} files, ${result.pages} pages, ${result.assets} assets)`);

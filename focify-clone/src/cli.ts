@@ -36,6 +36,8 @@ function usage() {
     ${c.dim}--max-pages <n>${c.reset}      Max pages to crawl (default: 50, 0 = unlimited)
     ${c.dim}--proxy <url>${c.reset}        HTTP proxy for challenge-protected sites
                          (same as FOCIFY_PROXY, e.g. http://user:pass@host:port)
+    ${c.dim}--proxy-max-pages <n>${c.reset} Page cap used instead of --max-pages only when the
+                         crawl is routed through the proxy (default: --max-pages)
     ${c.dim}--screenshots${c.reset}        Save before/after screenshots next to the output
     ${c.dim}--version${c.reset}            Print the version
     ${c.dim}--help${c.reset}               Show this help
@@ -49,7 +51,7 @@ function usage() {
   ${c.bold}Output${c.reset}
 
     stderr: progress lines. stdout: one JSON object, e.g.
-    {"directory":"/tmp/x","pages":12,"assets":140,"totalSize":1234567,"sourceUrl":"https://example.com"}
+    {"directory":"/tmp/x","pages":12,"assets":140,"totalSize":1234567,"sourceUrl":"https://example.com","proxied":false}
 `);
 }
 
@@ -58,6 +60,7 @@ async function main(): Promise<number> {
     out?: string;
     output?: string;
     "max-pages"?: string;
+    "proxy-max-pages"?: string;
     proxy?: string;
     screenshots?: boolean;
     help?: boolean;
@@ -70,6 +73,7 @@ async function main(): Promise<number> {
         out: { type: "string" },
         output: { type: "string" },
         "max-pages": { type: "string" },
+        "proxy-max-pages": { type: "string" },
         proxy: { type: "string" },
         screenshots: { type: "boolean", default: false },
         help: { type: "boolean", short: "h", default: false },
@@ -119,6 +123,15 @@ async function main(): Promise<number> {
     }
     maxPages = n;
   }
+  let proxiedMaxPages: number | undefined;
+  if (values["proxy-max-pages"] !== undefined) {
+    const n = Number(values["proxy-max-pages"]);
+    if (!Number.isInteger(n) || n < 0) {
+      fail(`Invalid --proxy-max-pages: ${values["proxy-max-pages"]}`);
+      return 2;
+    }
+    proxiedMaxPages = n;
+  }
 
   if (values.proxy) process.env.FOCIFY_PROXY = values.proxy;
 
@@ -129,7 +142,7 @@ async function main(): Promise<number> {
 
   const { clone, ChallengeBlockedError } = await import("./clone.js");
   try {
-    const result = await clone({ url, output, maxPages, screenshots: values.screenshots === true });
+    const result = await clone({ url, output, maxPages, proxiedMaxPages, screenshots: values.screenshots === true });
     process.stdout.write(
       JSON.stringify({
         directory: result.directory,
@@ -137,6 +150,7 @@ async function main(): Promise<number> {
         assets: result.assets,
         totalSize: result.totalSize,
         sourceUrl: result.sourceUrl,
+        proxied: result.proxied,
       }) + "\n",
     );
     return 0;

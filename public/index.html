@@ -321,7 +321,7 @@ footer .links{display:flex;justify-content:center;gap:24px;margin-bottom:12px}
         <input type="text" class="url-input" id="urlInput" placeholder="example.com" autocomplete="off" spellcheck="false">
         <button type="submit" class="focify-btn" id="goBtn">FOCify</button>
       </form>
-      <p style="text-align:center;font-size:12px;color:var(--secondary);margin-top:8px">Demo indexes up to 100 pages per site</p>
+      <p style="text-align:center;font-size:12px;color:var(--secondary);margin-top:8px">Demo indexes up to 100 pages per site (20 for challenge-protected sites, which go through a residential proxy)</p>
     </div>
 
     <!-- Upload tab -->
@@ -374,6 +374,10 @@ footer .links{display:flex;justify-content:center;gap:24px;margin-bottom:12px}
         <span class="result-label">URL</span>
         <span class="result-value"><a id="resultUrl" href="#" target="_blank"></a></span>
         <button class="copy-btn" onclick="copyText('resultUrl')">Copy</button>
+      </div>
+      <div class="result-row" id="proxyRow" style="display:none">
+        <span class="result-label">Note</span>
+        <span class="result-value" id="resultProxyNote"></span>
       </div>
       <div class="result-row" id="altUrlRow" style="display:none">
         <span class="result-label">Mirror</span>
@@ -819,7 +823,7 @@ function runDemo(sseUrl, displayName) {
         addLine(gwUrl, 'url-text');
 
         // Show result card
-        showResult(data.cid, gwUrl, data.siteBytes, data.dwebUrl);
+        showResult(data.cid, gwUrl, data.siteBytes, data.dwebUrl, data);
         break;
 
       case 'done':
@@ -846,8 +850,21 @@ function runDemo(sseUrl, displayName) {
 }
 
 // ── Show result ──
-function showResult(cid, gwUrl, siteBytes, altUrl) {
+function showResult(cid, gwUrl, siteBytes, altUrl, data) {
   document.getElementById('resultSection').classList.remove('hidden');
+
+  // Challenge-protected sites are crawled through a residential proxy with a
+  // smaller page cap; say so, or the smaller copy looks like a bug.
+  const proxyRow = document.getElementById('proxyRow');
+  if (data && data.proxied) {
+    document.getElementById('resultProxyNote').textContent =
+      'This site is challenge-protected, so it was crawled through a residential proxy' +
+      (data.proxyMaxPages ? ' and capped at ' + data.proxyMaxPages + ' pages' : '') +
+      (data.pages ? ' (' + data.pages + ' crawled).' : '.');
+    proxyRow.style.display = '';
+  } else {
+    proxyRow.style.display = 'none';
+  }
   document.getElementById('resultCid').textContent = cid;
   const urlEl = document.getElementById('resultUrl');
   urlEl.textContent = gwUrl;

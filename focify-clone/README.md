@@ -41,6 +41,8 @@ focify-clone <url> [options]
   --out <dir>          Output directory (default: ./<host>-<timestamp>/)
   --max-pages <n>      Max pages to crawl (default: 50, 0 = unlimited)
   --proxy <url>        HTTP proxy for challenge-protected sites
+  --proxy-max-pages <n> Page cap used instead of --max-pages when the crawl
+                       is routed through the proxy (default: same as --max-pages)
   --screenshots        Save before/after screenshots next to the output
 ```
 
@@ -48,7 +50,7 @@ Environment:
 
 | Variable | Purpose |
 |---|---|
-| `FOCIFY_PROXY` | Residential HTTP proxy (`http://user:pass@host:port`). Used only when the target serves a Cloudflare or Vercel managed challenge. Datacenter proxies and stealth plugins do not pass those challenges. |
+| `FOCIFY_PROXY` | Residential HTTP proxy (`http://user:pass@host:port`). Used only when the target serves a Cloudflare or Vercel managed challenge. Datacenter proxies and stealth plugins do not pass those challenges. A proxied crawl sends every request through the proxy, so it is slow (about 35 s a page on operationbroadway.com) and bandwidth-metered; `--proxy-max-pages` bounds it without touching direct crawls. |
 | `FOCIFY_CHROMIUM_PATH` | Use this Chromium binary instead of the one Playwright installed. |
 
 ## Output contract
@@ -63,7 +65,7 @@ This is the interface that focify.me's server depends on. Keep it stable.
 - **stdout**: exactly one JSON object on success:
 
   ```json
-  {"directory":"/tmp/x","pages":12,"assets":140,"totalSize":1234567,"sourceUrl":"https://example.com"}
+  {"directory":"/tmp/x","pages":12,"assets":140,"totalSize":1234567,"sourceUrl":"https://example.com","proxied":false}
   ```
 
 - **exit codes**: `0` success, `1` crawl failed, `2` usage error, `3` the site

@@ -42,6 +42,7 @@ module.exports = {
       FOCIFY_COPIES: "1",
       FOCIFY_PROVIDER_ID: "9",
       FOCIFY_MAX_PAGES: "100",
+      FOCIFY_PROXY_MAX_PAGES: "20",   // page cap only for crawls routed through the proxy
       ...(proxy ? { FOCIFY_PROXY: proxy } : {}),
       ...(credentialsFile ? { FOCIFY_CREDENTIALS_FILE: credentialsFile } : {}),
     },
