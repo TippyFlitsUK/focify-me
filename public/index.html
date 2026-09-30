@@ -367,6 +367,11 @@ footer .links{display:flex;justify-content:center;gap:24px;margin-bottom:12px}
         <span class="result-value"><a id="resultUrl" href="#" target="_blank"></a></span>
         <button class="copy-btn" onclick="copyText('resultUrl')">Copy</button>
       </div>
+      <div class="result-row" id="altUrlRow" style="display:none">
+        <span class="result-label">Mirror</span>
+        <span class="result-value"><a id="resultAltUrl" href="#" target="_blank"></a></span>
+        <button class="copy-btn" onclick="copyText('resultAltUrl')">Copy</button>
+      </div>
       <a class="visit-btn" id="visitBtn" href="#" target="_blank">Visit your site</a>
       <div class="action-btns">
         <button class="copy-link-btn" onclick="copyShareLink()">Copy link</button>
@@ -476,11 +481,12 @@ footer .links{display:flex;justify-content:center;gap:24px;margin-bottom:12px}
 
 <footer>
   <div class="links">
-    <a href="https://github.com/FilOzone/filecoin-nova" target="_blank">GitHub</a>
-    <a href="https://www.npmjs.com/package/filecoin-nova" target="_blank">NPM</a>
+    <a href="https://github.com/TippyFlitsUK/focify-me" target="_blank">GitHub</a>
+    <a href="https://github.com/filecoin-project/filecoin-pin" target="_blank">filecoin-pin</a>
     <a href="https://filecoin.cloud" target="_blank">Filecoin Onchain Cloud</a>
   </div>
-  <p>Built for &amp; powered by <a href="https://filecoin.cloud" target="_blank">Filecoin Onchain Cloud</a></p>
+  <p>Built on <a href="https://filecoin.cloud" target="_blank">Filecoin Onchain Cloud</a></p>
+  <p>focify.me is a personal, unofficial project. It is not affiliated with FilOz, the Filecoin Foundation or Protocol Labs.</p>
 </footer>
 
 <script>
@@ -681,7 +687,7 @@ async function startUploadDemo() {
     const startResp = await fetch('/api/demo/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ file: data.path }),
+      body: JSON.stringify({ file: data.path, originalName: data.originalName }),
     });
     if (!startResp.ok) {
       const err = await startResp.json();
@@ -715,7 +721,7 @@ function runDemo(sseUrl, displayName) {
   p.textContent = '$ ';
   const cmd = document.createElement('span');
   cmd.className = 'step-line';
-  cmd.textContent = 'nova demo ' + displayName;
+  cmd.textContent = 'focify ' + displayName;
   prompt.appendChild(p);
   prompt.appendChild(cmd);
   terminalBody.appendChild(prompt);
@@ -787,7 +793,7 @@ function runDemo(sseUrl, displayName) {
 
       case 'complete':
         currentCid = data.cid;
-        const gwUrl = data.dwebUrl || ('https://' + data.cid + '.ipfs.dweb.link/');
+        const gwUrl = data.gatewayUrl || data.dwebUrl || ('https://' + data.cid + '.ipfs.dweb.link/');
 
         addLine('', 'info-line');
         addLine('\u2501\u2501\u2501 Deploy complete \u2501\u2501\u2501', 'success-line');
@@ -805,7 +811,7 @@ function runDemo(sseUrl, displayName) {
         addLine(gwUrl, 'url-text');
 
         // Show result card
-        showResult(data.cid, gwUrl, data.siteBytes);
+        showResult(data.cid, gwUrl, data.siteBytes, data.dwebUrl);
         break;
 
       case 'done':
@@ -832,13 +838,24 @@ function runDemo(sseUrl, displayName) {
 }
 
 // ── Show result ──
-function showResult(cid, gwUrl, siteBytes) {
+function showResult(cid, gwUrl, siteBytes, altUrl) {
   document.getElementById('resultSection').classList.remove('hidden');
   document.getElementById('resultCid').textContent = cid;
   const urlEl = document.getElementById('resultUrl');
   urlEl.textContent = gwUrl;
   urlEl.href = gwUrl;
   document.getElementById('visitBtn').href = gwUrl;
+
+  // Second gateway, in case the first is rate-limited
+  const altRow = document.getElementById('altUrlRow');
+  if (altUrl && altUrl !== gwUrl) {
+    const altEl = document.getElementById('resultAltUrl');
+    altEl.textContent = altUrl;
+    altEl.href = altUrl;
+    altRow.style.display = '';
+  } else {
+    altRow.style.display = 'none';
+  }
 
   // Show monthly hosting cost ($5/TiB/month)
   const costRow = document.getElementById('costRow');

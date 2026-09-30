@@ -1,0 +1,29 @@
+name: focify-clone
+
+on:
+  push:
+    paths:
+      - "focify-clone/**"
+      - ".github/workflows/focify-clone.yml"
+  pull_request:
+    paths:
+      - "focify-clone/**"
+      - ".github/workflows/focify-clone.yml"
+
+jobs:
+  smoke:
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: focify-clone
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: focify-clone/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npm test

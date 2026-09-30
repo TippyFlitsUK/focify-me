@@ -1,0 +1,73 @@
+name: site
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "site/**"
+      - ".github/workflows/site.yml"
+  pull_request:
+    paths:
+      - "site/**"
+      - ".github/workflows/site.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - name: Check every link, external ones included
+        run: CHECK_EXTERNAL=1 node scripts/check-links.mjs dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site-dist
+          path: site/dist
+
+  publish:
+    # Pin the built site to Filecoin Onchain Cloud. Runs only on master and
+    # only when the session-key secrets exist, so forks and PRs never try.
+    needs: build
+    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+    runs-on: ubuntu-22.04
+    env:
+      SESSION_KEY: ${{ secrets.FOCIFY_SITE_SESSION_KEY }}
+      WALLET_ADDRESS: ${{ secrets.FOCIFY_SITE_WALLET_ADDRESS }}
+      NETWORK: ${{ vars.FOCIFY_SITE_NETWORK || 'mainnet' }}
+    steps:
+      - name: Skip when no credentials are configured
+        id: creds
+        run: |
+          if [ -z "$SESSION_KEY" ] || [ -z "$WALLET_ADDRESS" ]; then
+            echo "No FOCIFY_SITE_SESSION_KEY / FOCIFY_SITE_WALLET_ADDRESS secrets; not publishing."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/download-artifact@v4
+        if: steps.creds.outputs.skip != 'true'
+        with:
+          name: site-dist
+          path: dist
+      - uses: actions/setup-node@v4
+        if: steps.creds.outputs.skip != 'true'
+        with:
+          node-version: 22
+      - name: Pin to Filecoin Onchain Cloud
+        if: steps.creds.outputs.skip != 'true'
+        run: |
+          npx --yes filecoin-pin@2.1.1 add dist --network "$NETWORK" --copies 2 | tee pin.log
+          CID=$(grep -o 'Root CID: [a-z0-9]*' pin.log | head -1 | awk '{print $3}')
+          echo "cid=$CID" >> "$GITHUB_OUTPUT"
+          echo "### Published to Filecoin ($NETWORK)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- CID: \`$CID\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- https://$CID.ipfs.dweb.link/" >> "$GITHUB_STEP_SUMMARY"
+          echo "- https://$CID.ipfs.inbrowser.link/" >> "$GITHUB_STEP_SUMMARY"
