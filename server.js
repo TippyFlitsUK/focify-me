@@ -1,9 +1,10 @@
 import express from "express";
 import multer from "multer";
 import Database from "better-sqlite3";
-import { spawn } from "node:child_process";
-import { rm } from "node:fs/promises";
-import { readdirSync, statSync, lstatSync } from "node:fs";
+import { spawn, execFile } from "node:child_process";
+import { rm, mkdtemp } from "node:fs/promises";
+import { readdirSync, statSync, lstatSync, existsSync } from "node:fs";
+import { promisify } from "node:util";
 import { tmpdir } from "node:os";
 import { join, extname, resolve } from "node:path";
 import { createInterface } from "node:readline";
@@ -11,6 +12,7 @@ import { randomUUID } from "node:crypto";
 
 const PORT = process.env.PORT || 8090;
 const app = express();
+const execFileAsync = promisify(execFile);
 
 // ── SQLite tracking ──
 const DB_PATH = process.env.FOCIFY_DB || join(import.meta.dirname, "focify.db");
@@ -225,6 +227,88 @@ function finishJob(job) {
 let activeJobs = 0;
 const MAX_JOBS = 25;
 
+// ── Pipeline configuration ──
+// Two subprocesses per job: focify-clone crawls the site into a directory,
+// then filecoin-pin uploads that directory to Filecoin Onchain Cloud.
+const CLONE_CLI = process.env.FOCIFY_CLONE_CLI || join(import.meta.dirname, "focify-clone", "dist", "cli.js");
+const PIN_CLI = process.env.FILECOIN_PIN_CLI || join(import.meta.dirname, "node_modules", ".bin", "filecoin-pin");
+const PIN_NETWORK = process.env.FOCIFY_NETWORK || "calibration";
+const PIN_PROVIDER_ID = process.env.FOCIFY_PROVIDER_ID || "";
+const PIN_COPIES = process.env.FOCIFY_COPIES || "1";
+const PIN_CREDENTIALS_FILE = process.env.FOCIFY_CREDENTIALS_FILE || "";
+const MAX_PAGES = process.env.FOCIFY_MAX_PAGES || "100";
+
+// Result links use the subdomain gateway form: the clone keeps links
+// root-relative, which only works when "/" is the site root.
+function gatewayLinks(cid) {
+  return {
+    gatewayUrl: `https://${cid}.ipfs.inbrowser.link/`,
+    dwebUrl: `https://${cid}.ipfs.dweb.link/`,
+  };
+}
+
+// Spawn a child, stream its stderr and stdout lines through `onLine`,
+// and resolve with { code, stdout } once it exits.
+function runChild(job, cmd, args, { onStderrLine, onStdoutLine, env }) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(cmd, args, {
+      env: { ...process.env, FORCE_COLOR: "0", ...env },
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    job.child = child;
+    let stdoutBuf = "";
+    createInterface({ input: child.stderr }).on("line", (line) => onStderrLine?.(line));
+    createInterface({ input: child.stdout }).on("line", (line) => {
+      stdoutBuf += line + "\n";
+      onStdoutLine?.(line);
+    });
+    child.on("error", reject);
+    child.on("close", (code) => resolve({ code, stdout: stdoutBuf }));
+  });
+}
+
+// Parse a line of filecoin-pin (non-TTY) output into an SSE event.
+function parsePinLine(raw) {
+  const line = stripAnsi(raw).trim();
+  if (!line) return null;
+  if (line.startsWith("✓")) return { type: "success", text: line.slice(1).trim() };
+  if (line.startsWith("✗")) return { type: "error", text: line.slice(1).trim() };
+  const cidMatch = line.match(/^Root CID:\s+(\S+)/);
+  if (cidMatch) return { type: "cid", cid: cidMatch[1] };
+  const pieceMatch = line.match(/^Piece CID:\s+(\S+)/);
+  if (pieceMatch) return { type: "piece_cid", pieceCid: pieceMatch[1], text: line };
+  const dsMatch = line.match(/^Data Set ID:\s+(\d+)/);
+  if (dsMatch) return { type: "data_set", dataSetId: dsMatch[1], text: line };
+  if (/Add Complete/.test(line)) return { type: "deploy_complete" };
+  if (/^Add completed/.test(line)) return { type: "success", text: line };
+  if (/^(Explorer|Retrieval URL):/.test(line)) return null;
+  return { type: "info", text: line };
+}
+
+// Extract an uploaded archive (.zip, .tar, .tar.gz, .tgz) into a temp dir.
+// If the archive wraps everything in a single top-level folder, use that
+// folder as the site root so index.html sits at the top.
+async function extractArchive(archivePath, originalName) {
+  const tmpDir = await mkdtemp(join(tmpdir(), "focify-site-"));
+  const lower = (originalName || archivePath).toLowerCase();
+  const args = lower.endsWith(".zip")
+    ? ["unzip", ["-q", archivePath, "-d", tmpDir]]
+    : lower.endsWith(".tar.gz") || lower.endsWith(".tgz")
+      ? ["tar", ["-xzf", archivePath, "-C", tmpDir]]
+      : ["tar", ["-xf", archivePath, "-C", tmpDir]];
+  try {
+    await execFileAsync(args[0], args[1]);
+  } catch (err) {
+    await rm(tmpDir, { recursive: true, force: true }).catch(() => {});
+    throw new Error(`Failed to extract archive: ${err.stderr?.trim() || err.message}`);
+  }
+  const entries = readdirSync(tmpDir).filter((n) => !n.startsWith("."));
+  if (entries.length === 1 && statSync(join(tmpDir, entries[0])).isDirectory() && !existsSync(join(tmpDir, "index.html"))) {
+    return { root: join(tmpDir, entries[0]), tmpDir };
+  }
+  return { root: tmpDir, tmpDir };
+}
+
 // ── Start a job ──
 app.post("/api/demo/start", (req, res) => {
   const url = req.body.url;
@@ -274,92 +358,113 @@ app.post("/api/demo/start", (req, res) => {
     }
   }, 30_000);
 
-  // Spawn nova demo
-  const novaCli = process.env.NOVA_CLI;
-  const args = ["demo", input, "--json", "--provider-id", "9", "--max-pages", "100"];
-  const spawnOpts = { env: { ...process.env, FORCE_COLOR: "0" }, stdio: ["ignore", "pipe", "pipe"] };
-  const child = novaCli
-    ? spawn("node", [novaCli, ...args], spawnOpts)
-    : spawn("npx", ["-y", "--package", "filecoin-nova@latest", "nova", ...args], spawnOpts);
-
-  job.child = child;
-  let stdoutBuf = "";
-
-
-  const rl = createInterface({ input: child.stderr });
-  rl.on("line", (raw) => {
-    const event = parseLine(raw);
-    if (event) {
-      addEvent(job, event);
-    }
-  });
-
-  child.stdout.on("data", (chunk) => {
-    stdoutBuf += chunk.toString();
-  });
-
-  child.on("close", (code) => {
-
-    activeJobs--;
-    const now = new Date().toISOString();
-    const durationMs = Date.now() - job.createdAt;
-
-    let directory;
-    let cid = null;
-    let gatewayUrl = null;
-    let pages = null;
-    let error = null;
-
-    if (code === 0) {
-      try {
-        const result = JSON.parse(stdoutBuf.trim());
-        directory = result.directory;
-        cid = result.cid || null;
-        gatewayUrl = result.dwebUrl || result.gatewayUrl || null;
-        pages = result.pages || null;
-        // Compute site size before directory cleanup
-        const siteBytes = directory ? dirSize(directory) : 0;
-        addEvent(job, { type: "complete", ...result, siteBytes });
-      } catch {
-        const cidMatch = stdoutBuf.match(/baf[a-z0-9]{50,}/);
-        if (cidMatch) {
-          cid = cidMatch[0];
-          gatewayUrl = `https://${cid}.ipfs.dweb.link/`;
-          addEvent(job, { type: "complete", cid, gatewayUrl });
-        } else {
-          error = "Deploy finished but no CID found in output";
-          addEvent(job, { type: "error", text: error });
-        }
-      }
-    } else {
-      error = `Deploy failed (exit code ${code})`;
-      addEvent(job, { type: "error", text: error });
-    }
-
-    const status = cid ? "success" : "error";
-    completeJob.run(status, cid, gatewayUrl, pages, error, now, durationMs, job.id);
-
-    addEvent(job, { type: "done" });
-    finishJob(job);
-
-    if (directory) {
-      rm(directory, { recursive: true, force: true }).catch(() => {});
-    }
-  });
-
-  child.on("error", (err) => {
-
-    activeJobs--;
-    const now = new Date().toISOString();
-    const durationMs = Date.now() - job.createdAt;
-    completeJob.run("error", null, null, null, err.message, now, durationMs, job.id);
-    addEvent(job, { type: "error", text: err.message });
-    addEvent(job, { type: "done" });
-    finishJob(job);
-  });
+  // Run the pipeline in the background; the response returns the job id now.
+  runPipeline(job, { url, filePath, originalName: req.body.originalName });
 
   res.json({ jobId: job.id });
 });
+
+async function runPipeline(job, { url, filePath, originalName }) {
+  let siteDir = null;      // directory handed to filecoin-pin
+  let cleanupDir = null;   // directory to delete afterwards
+  let pages = null;
+  let cid = null;
+  let pieceCid = null;
+  let dataSetId = null;
+  let gatewayUrl = null;
+  let error = null;
+
+  // Crawl steps come from focify-clone as [n/4]; the upload is step 5.
+  const CLONE_STEPS = 4;
+  const TOTAL_STEPS = url ? CLONE_STEPS + 1 : 2;
+
+  try {
+    if (url) {
+      const normalized = url.startsWith("http") ? url : `https://${url}`;
+      const outDir = await mkdtemp(join(tmpdir(), "focify-clone-"));
+      cleanupDir = outDir;
+      const clone = await runChild(job, process.execPath, [CLONE_CLI, normalized, "--out", outDir, "--max-pages", MAX_PAGES], {
+        onStderrLine: (raw) => {
+          const event = parseLine(raw);
+          if (!event) return;
+          if (event.type === "step") event.total = TOTAL_STEPS;
+          addEvent(job, event);
+        },
+      });
+      if (clone.code !== 0) {
+        throw new Error(clone.code === 3
+          ? "This site is behind a security challenge that the demo cannot pass."
+          : `Site clone failed (exit code ${clone.code})`);
+      }
+      const result = JSON.parse(clone.stdout.trim());
+      siteDir = result.directory;
+      pages = result.pages || null;
+    } else {
+      addEvent(job, { type: "step", current: 1, total: TOTAL_STEPS, text: "Extracting archive" });
+      const extracted = await extractArchive(filePath, originalName);
+      siteDir = extracted.root;
+      cleanupDir = extracted.tmpDir;
+      addEvent(job, { type: "success", text: "Archive extracted" });
+    }
+
+    const siteBytes = dirSize(siteDir);
+
+    addEvent(job, { type: "step", current: TOTAL_STEPS, total: TOTAL_STEPS, text: "Uploading to Filecoin Onchain Cloud" });
+    const pinArgs = ["add", siteDir, "--network", PIN_NETWORK, "--copies", PIN_COPIES];
+    if (PIN_PROVIDER_ID) pinArgs.push("--provider-id", PIN_PROVIDER_ID);
+    if (PIN_CREDENTIALS_FILE) pinArgs.push("--credentials-file", PIN_CREDENTIALS_FILE);
+    let pinError = null;
+    const pin = await runChild(job, PIN_CLI, pinArgs, {
+      onStdoutLine: (raw) => {
+        const event = parsePinLine(raw);
+        if (!event) return;
+        if (event.type === "error") pinError = event.text;
+        if (event.type === "cid") cid = event.cid;
+        if (event.type === "piece_cid") pieceCid = event.pieceCid;
+        if (event.type === "data_set" && !dataSetId) dataSetId = event.dataSetId;
+        if (event.type === "piece_cid" || event.type === "data_set") event.type = "info";
+        addEvent(job, event);
+      },
+      onStderrLine: (raw) => {
+        const text = stripAnsi(raw).trim();
+        if (text) addEvent(job, { type: "info", text });
+      },
+    });
+    if (pin.code !== 0 || !cid) {
+      throw new Error(pinError || (cid ? `Upload finished with errors (exit code ${pin.code})` : "Upload finished but no CID found in output"));
+    }
+
+    const links = gatewayLinks(cid);
+    gatewayUrl = links.gatewayUrl;
+    addEvent(job, {
+      type: "complete",
+      cid,
+      pieceCid,
+      dataSetId,
+      ...links,
+      pages,
+      siteBytes,
+      sourceUrl: url || originalName || null,
+    });
+  } catch (err) {
+    error = err.message || String(err);
+    // filecoin-pin's own ✗ line was already streamed; don't repeat it.
+    if (!job.events.some((e) => e.data.type === "error" && e.data.text === error)) {
+      addEvent(job, { type: "error", text: error });
+    }
+  }
+
+  activeJobs--;
+  const now = new Date().toISOString();
+  const durationMs = Date.now() - job.createdAt;
+  completeJob.run(cid ? "success" : "error", cid, gatewayUrl, pages, error, now, durationMs, job.id);
+  addEvent(job, { type: "done" });
+  finishJob(job);
+
+  if (cleanupDir) rm(cleanupDir, { recursive: true, force: true }).catch(() => {});
+  if (filePath) rm(filePath, { force: true }).catch(() => {});
+}
+
 
 // ── Stream events for a job (supports reconnect via Last-Event-ID) ──
 app.get("/api/demo/stream/:jobId", (req, res) => {

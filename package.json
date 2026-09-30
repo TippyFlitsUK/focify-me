@@ -4,11 +4,14 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "build": "npm --prefix focify-clone install && npm --prefix focify-clone run build",
+    "test": "npm --prefix focify-clone test"
   },
   "dependencies": {
     "better-sqlite3": "^12.6.2",
     "express": "^5.1.0",
+    "filecoin-pin": "2.1.1",
     "multer": "^2.0.1"
   }
 }

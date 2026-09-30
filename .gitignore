@@ -2,3 +2,5 @@ node_modules/
 focify.db
 focify.db-wal
 focify.db-shm
+.focify_proxy
+.focify_credentials
