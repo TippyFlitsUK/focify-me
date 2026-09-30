@@ -4,8 +4,10 @@
 // app, both chmod 600, are read at start:
 //   .focify_proxy        one line: http://user:pass@host:port (residential
 //                        proxy used only for challenge-protected sites)
-//   .focify_credentials  dotenv-style SESSION_KEY / WALLET_ADDRESS for
-//                        filecoin-pin (passed via --credentials-file)
+//   .focify_credentials  optional dotenv-style SESSION_KEY / WALLET_ADDRESS
+//                        for filecoin-pin (passed via --credentials-file).
+//                        Not needed after `filecoin-pin login`: the saved
+//                        session in ~/.local/share/filecoin-pin is used.
 //
 // After changing env here: pm2 delete focify-me && pm2 start ecosystem.config.cjs && pm2 save
 // (pm2 restart keeps stale env vars from the dump).

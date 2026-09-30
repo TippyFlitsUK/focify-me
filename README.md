@@ -36,10 +36,12 @@ npm run dev                       # http://localhost:8090
 ```
 
 Without credentials the crawl works and the upload step fails with a clear
-message. To upload, create a calibnet session key with
-`npx filecoin-pin login --network calibration` and point
-`FOCIFY_CREDENTIALS_FILE` at the resulting dotenv file (SESSION_KEY and
-WALLET_ADDRESS). The payer wallet needs at least 0.1 FIL plus USDFC.
+message. To upload, log in once as the user that runs the server:
+`npx filecoin-pin login --network calibration`. filecoin-pin saves the
+session key under its data directory and picks it up on every `add`, so no
+further configuration is needed. `FOCIFY_CREDENTIALS_FILE` is only for
+pointing at a different dotenv file (SESSION_KEY and WALLET_ADDRESS). The
+payer wallet needs at least 0.1 FIL plus USDFC.
 
 ## Configuration
 
@@ -53,7 +55,7 @@ git-ignored and read by `ecosystem.config.cjs` at start.
 | `FOCIFY_COPIES` | 1 | Storage copies per upload |
 | `FOCIFY_PROVIDER_ID` | (auto) | Pin a storage provider id |
 | `FOCIFY_MAX_PAGES` | 100 | Crawl page cap |
-| `FOCIFY_CREDENTIALS_FILE` | (none) | dotenv file with `SESSION_KEY` and `WALLET_ADDRESS` |
+| `FOCIFY_CREDENTIALS_FILE` | (none) | Optional dotenv file with `SESSION_KEY` and `WALLET_ADDRESS`; unset, filecoin-pin uses its saved `login` |
 | `FOCIFY_PROXY` | (none) | Residential HTTP proxy for challenge-protected sites |
 | `FOCIFY_CLONE_CLI` | `focify-clone/dist/cli.js` | Override the crawler binary |
 | `FILECOIN_PIN_CLI` | `node_modules/.bin/filecoin-pin` | Override the uploader binary |
@@ -70,7 +72,8 @@ pm2 delete focify-me; pm2 start ecosystem.config.cjs && pm2 save
 ```
 
 `pm2 restart` keeps stale environment variables from its dump, so always
-delete and start after changing `ecosystem.config.cjs`. Check with `pm2 env`.
+delete and start after changing `ecosystem.config.cjs`. Check with
+`pm2 env <id>` (the numeric id from `pm2 list`).
 
 ## Endpoints
 
