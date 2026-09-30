@@ -250,7 +250,7 @@ h1,h2,h3{font-family:'Sora','Inter',system-ui,sans-serif}
 .focified-section{
   max-width:1100px;margin:0 auto;padding:64px 24px 64px;
 }
-.focified-section .focified-logo{display:block;margin:0 auto 12px;height:96px}
+.focified-section .focified-logo{display:block;margin:0 auto 12px;height:96px;max-width:100%}
 .focified-section h2{text-align:center;font-size:24px;margin-bottom:12px}
 .focified-section .subtitle{text-align:center;color:var(--secondary);font-size:15px;margin-bottom:40px}
 .focified-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
@@ -353,6 +353,10 @@ footer .links{display:flex;justify-content:center;gap:24px;margin-bottom:12px}
 <section class="result-section hidden" id="resultSection">
     <div class="result-card">
       <h2>Your site is live</h2>
+      <div class="result-row" id="costRow" style="display:none">
+        <span class="result-label">Cost</span>
+        <span class="result-value" id="resultCost"></span>
+      </div>
       <div class="result-row">
         <span class="result-label">CID</span>
         <span class="result-value cid-text" id="resultCid"></span>
@@ -362,10 +366,6 @@ footer .links{display:flex;justify-content:center;gap:24px;margin-bottom:12px}
         <span class="result-label">URL</span>
         <span class="result-value"><a id="resultUrl" href="#" target="_blank"></a></span>
         <button class="copy-btn" onclick="copyText('resultUrl')">Copy</button>
-      </div>
-      <div class="result-row" id="costRow" style="display:none">
-        <span class="result-label">Hosting</span>
-        <span class="result-value" id="resultCost"></span>
       </div>
       <a class="visit-btn" id="visitBtn" href="#" target="_blank">Visit your site</a>
       <div class="action-btns">
@@ -850,7 +850,7 @@ function showResult(cid, gwUrl, siteBytes) {
       : (siteBytes / (1024 * 1024)).toFixed(1) + ' MB';
     costRow.style.display = '';
     document.getElementById('resultCost').textContent =
-      '$' + monthlyCost.toFixed(4) + '/month (' + sizeStr + ' at $5/TiB)';
+      'Host this site on FOC for $' + monthlyCost.toFixed(6) + ' / month';
   } else {
     costRow.style.display = 'none';
   }
