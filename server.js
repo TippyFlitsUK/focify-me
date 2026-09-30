@@ -298,16 +298,27 @@ function parsePinLine(raw) {
 async function extractArchive(archivePath, originalName) {
   const tmpDir = await mkdtemp(join(tmpdir(), "focify-site-"));
   const lower = (originalName || archivePath).toLowerCase();
-  const args = lower.endsWith(".zip")
-    ? ["unzip", ["-q", archivePath, "-d", tmpDir]]
+  // For zips, prefer unzip and fall back to Python's zipfile module when
+  // unzip is not installed (it is not part of a minimal Ubuntu).
+  const attempts = lower.endsWith(".zip")
+    ? [["unzip", ["-q", archivePath, "-d", tmpDir]], ["python3", ["-m", "zipfile", "-e", archivePath, tmpDir]]]
     : lower.endsWith(".tar.gz") || lower.endsWith(".tgz")
-      ? ["tar", ["-xzf", archivePath, "-C", tmpDir]]
-      : ["tar", ["-xf", archivePath, "-C", tmpDir]];
-  try {
-    await execFileAsync(args[0], args[1]);
-  } catch (err) {
+      ? [["tar", ["-xzf", archivePath, "-C", tmpDir]]]
+      : [["tar", ["-xf", archivePath, "-C", tmpDir]]];
+  let lastErr = null;
+  for (const [cmd, args] of attempts) {
+    try {
+      await execFileAsync(cmd, args);
+      lastErr = null;
+      break;
+    } catch (err) {
+      lastErr = err;
+      if (err.code !== "ENOENT") break; // a real extraction error, don't try the next tool
+    }
+  }
+  if (lastErr) {
     await rm(tmpDir, { recursive: true, force: true }).catch(() => {});
-    throw new Error(`Failed to extract archive: ${err.stderr?.trim() || err.message}`);
+    throw new Error(`Failed to extract archive: ${lastErr.stderr?.trim() || lastErr.message}`);
   }
   const entries = readdirSync(tmpDir).filter((n) => !n.startsWith("."));
   if (entries.length === 1 && statSync(join(tmpDir, entries[0])).isDirectory() && !existsSync(join(tmpDir, "index.html"))) {
