@@ -1,44 +1,30 @@
 ---
 import Base from "../layouts/Base.astro";
+import DemoCard from "../components/DemoCard.astro";
+import GuideCard from "../components/GuideCard.astro";
 import { getCollection } from "astro:content";
-const demos = (await getCollection("demos")).sort((a, b) => a.data.order - b.data.order);
+const demos = (await getCollection("demos")).filter((d) => d.data.status === "live").sort((a, b) => a.data.order - b.data.order);
 const guides = (await getCollection("guides")).sort((a, b) => a.data.order - b.data.order);
-const live = demos.filter((d) => d.data.status === "live");
 ---
-<Base>
-  <h1>Filecoin Onchain Cloud, shown rather than told</h1>
-  <p class="lede">
-    A gallery of working demos built on Filecoin Onchain Cloud, and short guides that explain what each one does.
-    Start with the converter: paste a URL and watch a static copy of that site land on Filecoin.
-  </p>
-  <p>
-    <a class="btn" href="./demo/">Try the site converter</a>
-    <a class="btn secondary" href="./demos/">Browse all demos</a>
-  </p>
+<Base tagline="Working demos and short guides for <span>Filecoin Onchain Cloud</span>">
+  <section class="focified-section" style="padding-bottom:32px;text-align:center">
+    <a class="focify-btn" href="./demo/">FOCify a website</a>
+    <p class="subtitle" style="margin:12px 0 0">Paste a URL, get a copy of the site on Filecoin. Free on the calibration testnet.</p>
+  </section>
 
-  <h2>Live demos</h2>
-  <div class="grid">
-    {live.map((d) => (
-      <a class="card" href={`./demos/${d.id}/`} style="text-decoration:none;color:inherit">
-        <h3>{d.data.title}</h3>
-        <p>{d.data.summary}</p>
-        <div class="meta">
-          <span class="pill live">live</span>
-          <span>by {d.data.owner}</span>
-          {d.data.verified && <span>checked {d.data.verified}</span>}
-        </div>
-      </a>
-    ))}
-  </div>
+  <section class="focified-section">
+    <img class="focified-logo" src="./focified.png" alt="The FOCified">
+    <p class="subtitle">Things already running on Filecoin Onchain Cloud</p>
+    <div class="focified-grid">
+      {demos.map((d) => <DemoCard demo={d} href={`./demos/${d.id}/`} />)}
+    </div>
+  </section>
 
-  <h2>Guides</h2>
-  <div class="grid">
-    {guides.map((g) => (
-      <a class="card" href={`./guides/${g.id}/`} style="text-decoration:none;color:inherit">
-        <h3>{g.data.title}</h3>
-        <p>{g.data.summary}</p>
-        <div class="meta"><span>updated {g.data.updated}</span></div>
-      </a>
-    ))}
-  </div>
+  <section class="focified-section">
+    <h2>Guides</h2>
+    <p class="subtitle">Short, practical, and pointing at the official docs for the details</p>
+    <div class="focified-grid">
+      {guides.map((g) => <GuideCard guide={g} href={`./guides/${g.id}/`} />)}
+    </div>
+  </section>
 </Base>

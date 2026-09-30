@@ -1,0 +1,14 @@
+---
+const { demo, href } = Astro.props;
+---
+<div class="focified-card"><a href={href}>
+  <div class="focified-info">
+    <div class="focified-name">{demo.data.title}</div>
+    <div class="focified-summary">{demo.data.summary}</div>
+    <div class="focified-stats">
+      <div class="focified-stat"><span class="label">Built by</span><span class="value">{demo.data.owner}</span></div>
+      <div class="focified-stat"><span class="label">Status</span><span class={`value ${demo.data.status}`}>{demo.data.status}</span></div>
+      {demo.data.verified && <div class="focified-stat"><span class="label">Checked</span><span class="value">{demo.data.verified}</span></div>}
+    </div>
+  </div>
+</a></div>

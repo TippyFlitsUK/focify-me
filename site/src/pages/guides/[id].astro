@@ -9,10 +9,12 @@ const { guide } = Astro.props;
 const { Content } = await render(guide);
 const demo = guide.data.demo ? await getEntry("demos", guide.data.demo) : null;
 ---
-<Base title={guide.data.title} description={guide.data.summary}>
-  <h1>{guide.data.title}</h1>
-  <p class="lede">{guide.data.summary}</p>
-  {demo && <p>Part of <a href={`../../demos/${demo.id}/`}>{demo.data.title}</a>.</p>}
-  <div class="prose"><Content /></div>
-  <p class="meta">Updated {guide.data.updated}</p>
+<Base title={guide.data.title} section="guides" heading={guide.data.title} tagline={guide.data.summary}>
+  <section class="result-section">
+    <div class="result-card">
+      {demo && <div class="result-row"><span class="result-label">Demo</span><span class="result-value"><a href={`../../demos/${demo.id}/`}>{demo.data.title}</a></span></div>}
+      <div class="result-row"><span class="result-label">Updated</span><span class="result-value">{guide.data.updated}</span></div>
+      <div class="prose"><Content /></div>
+    </div>
+  </section>
 </Base>
