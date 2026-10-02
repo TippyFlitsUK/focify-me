@@ -22,34 +22,36 @@ const root = depth ? "../".repeat(depth) : "./";
 <meta name="description" content={description}>
 <link rel="icon" type="image/png" href={`${root}icon.png`}>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
 
-<section class="hero">
+<header class="bar"><div class="bar-in">
   <a href={root}><img src={`${root}focify.png`} alt="FOCify.ME"></a>
-  <h1>{heading}</h1>
-  {tagline ? <p class="tagline"><Fragment set:html={tagline} /></p> : <p class="tagline">Enter any URL and watch it go live on <span>Filecoin Onchain Cloud</span></p>}
-  {cta && <p class="cta"><a class="focify-btn" href={cta.href}>{cta.label}</a></p>}
   <nav class="nav">
-    <a href={`${root}`}>FOCify a site</a>
+    <a href={`${root}`}>Convert</a>
     <a href={`${root}demos/`} class={section === "demos" ? "active" : ""}>Demos</a>
     <a href={`${root}guides/`} class={section === "guides" ? "active" : ""}>Guides</a>
     <a href={`${root}about/`} class={section === "about" ? "active" : ""}>About</a>
   </nav>
+</div></header>
+
+<section class={section ? "hero sub" : "hero"}>
+  <h1>{heading}</h1>
+  {tagline ? <p class="tagline"><Fragment set:html={tagline} /></p> : <p class="tagline">Enter any URL and watch it go live on <span>Filecoin Onchain Cloud</span></p>}
+  {cta && <p class="cta"><a class="focify-btn" href={cta.href}>{cta.label}</a></p>}
 </section>
 
 <slot />
 
-<footer>
+<footer><div class="foot-in">
   <div class="links">
     <a href="https://github.com/TippyFlitsUK/focify-me" target="_blank">GitHub</a>
     <a href="https://github.com/filecoin-project/filecoin-pin" target="_blank">filecoin-pin</a>
     <a href="https://filecoin.cloud" target="_blank">Filecoin Onchain Cloud</a>
   </div>
-  <p>Built on <a href="https://filecoin.cloud" target="_blank">Filecoin Onchain Cloud</a></p>
   <p>focify.me is a personal, unofficial project. It is not affiliated with FilOz, the Filecoin Foundation or Protocol Labs.</p>
-</footer>
+</div></footer>
 
 </body>
 </html>
