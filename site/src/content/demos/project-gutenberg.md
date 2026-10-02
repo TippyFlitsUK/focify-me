@@ -7,6 +7,7 @@ owner: Jennifer Wang
 stack: [filecoin-skills, filecoin-pin, ENS]
 status: live
 verified: 2026-09-28
+category: archives
 order: 5
 ---
 

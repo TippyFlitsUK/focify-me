@@ -68,6 +68,17 @@ a:hover{text-decoration:underline}
 .focified-stat .retired{color:var(--muted)}
 .focified-stat .unverified{color:var(--warning)}
 
+.net-strip{max-width:1100px;margin:0 auto;padding:0 24px 40px;width:100%;text-align:center}
+.net-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px 16px}
+.net-stat{display:flex;flex-direction:column;gap:4px}
+.net-value{font-family:'Sora',sans-serif;font-size:24px;font-weight:700;color:var(--dark)}
+.net-label{font-size:13px;color:var(--secondary)}
+.net-note{font-size:12px;color:var(--muted);margin-top:10px}
+@media(max-width:700px){.net-stats{grid-template-columns:repeat(2,1fr)}}
+
+.focified-section .focified-grid+h2.group{margin-top:56px}
+.focified-section .more{text-align:center;color:var(--secondary);font-size:15px;margin-top:48px}
+
 /* ── Detail pages (as .result-card / .result-row) ── */
 .result-section{max-width:760px;margin:0 auto;padding:0 24px 48px;width:100%}
 .result-card{

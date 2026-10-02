@@ -7,6 +7,7 @@ owner: James Bluett
 stack: [filecoin-pin, PDP, Forest, DuckDB WASM]
 status: live
 verified: 2026-09-17
+category: archives
 order: 2
 ---
 

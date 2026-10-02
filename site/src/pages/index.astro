@@ -1,10 +1,11 @@
 ---
 import Base from "../layouts/Base.astro";
 import DemoCard from "../components/DemoCard.astro";
+import NetworkStrip from "../components/NetworkStrip.astro";
 import GuideCard from "../components/GuideCard.astro";
 import { getCollection } from "astro:content";
 // The converter has its own button in the hero, so the grid lists the others.
-const demos = (await getCollection("demos")).filter((d) => d.data.status === "live" && d.id !== "site-converter").sort((a, b) => a.data.order - b.data.order);
+const demos = (await getCollection("demos")).filter((d) => d.data.status === "live" && d.data.category !== "network" && d.id !== "site-converter").sort((a, b) => a.data.order - b.data.order);
 const guides = (await getCollection("guides")).sort((a, b) => a.data.order - b.data.order);
 ---
 <Base
@@ -12,6 +13,7 @@ const guides = (await getCollection("guides")).sort((a, b) => a.data.order - b.d
   tagline="Demos you can click, guides you can follow, and a converter that puts any website on <span>Filecoin Onchain Cloud</span>"
   cta={{ href: "./demo/", label: "FOCify a website" }}
 >
+  <NetworkStrip />
   <section class="focified-section">
     <h2>Demos</h2>
     <p class="subtitle">Working things built on Filecoin Onchain Cloud, by their authors</p>

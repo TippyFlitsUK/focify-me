@@ -291,6 +291,13 @@ footer .links{display:flex;justify-content:center;gap:24px;margin-bottom:12px}
 }
 
 .hidden{display:none}
+.net-strip{max-width:1100px;margin:0 auto;padding:0 24px 40px;width:100%;text-align:center}
+.net-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px 16px}
+.net-stat{display:flex;flex-direction:column;gap:4px}
+.net-value{font-family:'Sora',sans-serif;font-size:24px;font-weight:700;color:var(--dark)}
+.net-label{font-size:13px;color:var(--secondary)}
+.net-note{font-size:12px;color:var(--muted);margin-top:10px}
+@media(max-width:700px){.net-stats{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
@@ -447,6 +454,16 @@ footer .links{display:flex;justify-content:center;gap:24px;margin-bottom:12px}
         Post to X
       </button>
     </div>
+</section>
+
+<section class="net-strip" id="netStrip" hidden>
+  <div class="net-stats">
+    <div class="net-stat"><span class="net-value" data-net="data_sets"></span><span class="net-label">data sets</span></div>
+    <div class="net-stat"><span class="net-value" data-net="pieces"></span><span class="net-label">pieces stored</span></div>
+    <div class="net-stat"><span class="net-value" data-net="providers"></span><span class="net-label">active providers</span></div>
+    <div class="net-stat"><span class="net-value" data-net="proofs_24h"></span><span class="net-label">proofs in the last 24h</span></div>
+  </div>
+  <p class="net-note">Filecoin Onchain Cloud on mainnet, as of block <span data-net="as_of_block"></span>. Data sets with a proof cycle in the last 3 days; providers that proved in the last 24 hours. Source: observer.yablu.net</p>
 </section>
 
 <!-- ── The FOCified ── -->
@@ -1301,6 +1318,42 @@ function resetAll() {
   ensBtn.disabled = false; ensBtn.textContent = 'Connect Wallet';
   if (eventSource) { eventSource.close(); eventSource = null; }
 }
+
+(function () {
+  var el = document.getElementById("netStrip");
+  if (!el || !window.fetch) return;
+  var KEY = "focify.net.v1", TTL = 15 * 60 * 1000;
+  var SQL = "WITH active AS (SELECT c.set_id, c.storage_provider FROM pdp_data_set_created c WHERE NOT EXISTS (SELECT 1 FROM pdp_data_set_deleted d WHERE d.set_id = c.set_id) AND EXISTS (SELECT 1 FROM pdp_next_proving_period n WHERE n.set_id = c.set_id AND n.timestamp > EXTRACT(EPOCH FROM NOW()) - 259200)) SELECT (SELECT COUNT(*) FROM active) AS data_sets, (SELECT COALESCE(SUM(a.piece_count),0) FROM pdp_pieces_added a JOIN active s ON s.set_id = a.set_id) - (SELECT COALESCE(SUM(r.piece_count),0) FROM pdp_pieces_removed r JOIN active s ON s.set_id = r.set_id) AS pieces, (SELECT COUNT(DISTINCT s.storage_provider) FROM pdp_possession_proven p JOIN active s ON s.set_id = p.set_id WHERE p.timestamp > EXTRACT(EPOCH FROM NOW()) - 86400) AS providers, (SELECT COUNT(*) FROM pdp_possession_proven WHERE timestamp > EXTRACT(EPOCH FROM NOW()) - 86400) AS proofs_24h, GREATEST((SELECT MAX(block_number) FROM pdp_possession_proven), (SELECT MAX(block_number) FROM pdp_next_proving_period), (SELECT MAX(block_number) FROM pdp_pieces_added)) AS as_of_block";
+  function show(d) {
+    var ok = true;
+    el.querySelectorAll("[data-net]").forEach(function (n) {
+      var v = Number(d[n.getAttribute("data-net")]);
+      if (!isFinite(v) || v <= 0) ok = false;
+      else n.textContent = n.getAttribute("data-net") === "as_of_block" ? String(v) : v.toLocaleString("en-GB");
+    });
+    el.hidden = !ok;
+    return ok;
+  }
+  try {
+    var c = JSON.parse(sessionStorage.getItem(KEY));
+    if (c && Date.now() - c.t < TTL && show(c.d)) return;
+  } catch (e) {}
+  var ctl = new AbortController();
+  setTimeout(function () { ctl.abort(); }, 15000);
+  fetch("https://observer.yablu.net/sql", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ network: "mainnet", sql: SQL }),
+    signal: ctl.signal,
+  })
+    .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+    .then(function (j) {
+      var d = j && j.rows && j.rows[0];
+      if (!d || !show(d)) return;
+      try { sessionStorage.setItem(KEY, JSON.stringify({ t: Date.now(), d: d })); } catch (e) {}
+    })
+    .catch(function () {});
+})();
 </script>
 </body>
 </html>
