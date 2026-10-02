@@ -53,7 +53,18 @@ for (const file of htmlFiles) {
 
 let externalFailures = [];
 if (checkExternal) {
+  const token = process.env.GITHUB_TOKEN;
+  const viaApi = (url) => {
+    const m = token && url.match(/^https:\/\/github\.com\/([^/]+\/[^/]+)\/(?:blob|tree)\/([^/]+)\/(.+)$/);
+    return m ? `https://api.github.com/repos/${m[1]}/contents/${m[3]}?ref=${m[2]}` : null;
+  };
   const check = async (url) => {
+    const api = viaApi(url);
+    if (api) {
+      const res = await fetch(api, { headers: { authorization: `Bearer ${token}`, accept: "application/vnd.github+json" } }).catch(() => null);
+      if (res && res.ok) return null;
+      if (res && res.status === 404) return `${url} -> HTTP 404 (on ${external.get(url).join(", ")})`;
+    }
     for (let attempt = 1; ; attempt++) {
       let failure;
       let retry = false;
