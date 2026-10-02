@@ -202,6 +202,20 @@ a:hover{text-decoration:underline}
 .install{display:block;font:400 12px var(--mono);background:var(--paper);border:1px solid var(--rule);padding:6px 8px;word-break:break-all}
 @media(max-width:800px){.prompts,.focified-grid.two{grid-template-columns:1fr}}
 
+.tm-sites{display:flex;flex-wrap:wrap;margin-bottom:-1px}
+.tm-sites .tab{padding:10px 14px;border:1px solid var(--ink);margin-right:-1px;background:var(--paper);color:var(--label);font:500 12px var(--mono);cursor:pointer}
+.tm-sites .tab.active{background:var(--panel);color:var(--ink);border-bottom-color:var(--panel)}
+.tm-sites .tab span{color:var(--blue);margin-left:6px}
+.tm-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.tm-head .fig{margin-top:0}
+.tm input[type=range]{width:100%;margin:16px 0 4px;accent-color:var(--blue)}
+.tm-ticks{display:flex;justify-content:space-between;gap:2px;margin-bottom:18px;min-height:14px}
+.tm-ticks .tick{flex:1;max-width:14px;height:14px;border:1px solid var(--ink);background:var(--paper);cursor:pointer;padding:0}
+.tm-ticks .tick.on{background:var(--blue);border-color:var(--blue)}
+.tm .fund{border-top:1px dashed var(--rule);padding-top:16px}
+.tm .mono{word-break:break-all}
+.proofcell small{display:block;font:400 11px var(--mono);color:var(--label)}
+
 footer{margin-top:auto;background:var(--panel);border-top:1px solid var(--rule);font:400 11px/1.7 var(--mono);color:var(--label)}
 footer .foot-in{max-width:var(--page);margin:0 auto;padding:18px var(--gutter);display:flex;flex-direction:column;gap:6px}
 footer .links{display:flex;gap:22px;flex-wrap:wrap;text-transform:uppercase;letter-spacing:.06em}
