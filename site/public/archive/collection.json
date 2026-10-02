@@ -1,0 +1,259 @@
+{
+ "archive": "apollo-11",
+ "title": "Apollo 11 photographs",
+ "credit": "NASA",
+ "items": [
+  {
+   "id": "AS11-44-6550",
+   "file": "AS11-44-6550.jpg",
+   "title": "View of moon limb,with Earth on the horizon,Mare Smythii Region",
+   "date": "1969-07-16",
+   "bytes": 1792720,
+   "sha256": "703719a24043400c1b15a87cfc46428b5b40d7f7bf49d18eccc0a71a9162d0c7",
+   "source": "https://images.nasa.gov/details/as11-44-6550"
+  },
+  {
+   "id": "AS11-36-5337",
+   "file": "AS11-36-5337.jpg",
+   "title": "View of Earth taken by Apollo 11 crewmembers",
+   "date": "1969-07-16",
+   "bytes": 3145426,
+   "sha256": "59601ddf27a32962d7d67f3c8086059149426e28508d50c182422a5e6e5d8502",
+   "source": "https://images.nasa.gov/details/as11-36-5337"
+  },
+  {
+   "id": "AS11-44-6667",
+   "file": "AS11-44-6667.jpg",
+   "title": "View of a full Moon photographed from Apollo 11 spacecraft",
+   "date": "1969-07-21",
+   "bytes": 2250538,
+   "sha256": "69629f78e3ccd939b39f31c19b89c1e2e751effd930d5a3a58f823403553f64c",
+   "source": "https://images.nasa.gov/details/as11-44-6667"
+  },
+  {
+   "id": "AS11-36-5355",
+   "file": "AS11-36-5355.jpg",
+   "title": "View of Earth, showing Africa, Europe and Asia taken by Apollo 11 crewmember",
+   "date": "1969-07-16",
+   "bytes": 559747,
+   "sha256": "21becca0e317316160bcbe5623fedfa41295e02c0b9d56859285ca1ec55f4037",
+   "source": "https://images.nasa.gov/details/as11-36-5355"
+  },
+  {
+   "id": "AS11-44-6552",
+   "file": "AS11-44-6552.jpg",
+   "title": "View of Earth rising over Moon's horizon taken from Apollo 11 spacecraft",
+   "date": "1969-07-16",
+   "bytes": 1652770,
+   "sha256": "aafac8387276c6d8f4fa76f9b90004884600c9a8c24ec981e193d22b38b1bb93",
+   "source": "https://images.nasa.gov/details/as11-44-6552"
+  },
+  {
+   "id": "AS11-44-6689",
+   "file": "AS11-44-6689.jpg",
+   "title": "One-third of Earth's sphere as seen from Apollo 11 spacecraft",
+   "date": "1969-07-20",
+   "bytes": 4366508,
+   "sha256": "f489fd9e7158cde0c48e0f5c4d8c699042f578a9c73ac106035c708ec728d707",
+   "source": "https://images.nasa.gov/details/as11-44-6689"
+  },
+  {
+   "id": "AS11-43-6439",
+   "file": "AS11-43-6439.jpg",
+   "title": "Apollo 11 oblique view of lunar farside",
+   "date": "1969-07-16",
+   "bytes": 3820801,
+   "sha256": "ac8ef920f94f52b19758d75a1078398c3ba2b18ce5f642eb720c53d8d671bc48",
+   "source": "https://images.nasa.gov/details/as11-43-6439"
+  },
+  {
+   "id": "AS11-42-6237",
+   "file": "AS11-42-6237.jpg",
+   "title": "Oblique view of crater Theophilus at northwest edge of Sea of Nectar",
+   "date": "1969-07-16",
+   "bytes": 5000773,
+   "sha256": "fb3f2bf46d994c3c9ed041d785e71f0d1071adb1bc29ebfdc1177535148955e9",
+   "source": "https://images.nasa.gov/details/as11-42-6237"
+  },
+  {
+   "id": "AS11-37-5445",
+   "file": "AS11-37-5445.jpg",
+   "title": "Apollo 11 Command/Service modules photographed from Lunar Module in orbit",
+   "date": "1969-07-20",
+   "bytes": 3597258,
+   "sha256": "1eb4ac39a92beef57bd090947885a1983ba83bd2a3003703b52ae30bbfb412ab",
+   "source": "https://images.nasa.gov/details/as11-37-5445"
+  },
+  {
+   "id": "AS11-44-6626",
+   "file": "AS11-44-6626.jpg",
+   "title": "Apollo 11 Lunar Module ascent stage photographed from Command Module",
+   "date": "1969-07-21",
+   "bytes": 2977052,
+   "sha256": "4105299f48f01592a195766539cfe162544089af5c51e588562d7ecd040d9e0e",
+   "source": "https://images.nasa.gov/details/as11-44-6626"
+  },
+  {
+   "id": "AS11-44-6642",
+   "file": "AS11-44-6642.jpg",
+   "title": "Apollo 11 Lunar Module ascent stage photographed from Command Module",
+   "date": "1969-07-21",
+   "bytes": 587185,
+   "sha256": "119584080f0b4dd81f114c23012903758f4abb709a64ded45bb38bf583572c34",
+   "source": "https://images.nasa.gov/details/as11-44-6642"
+  },
+  {
+   "id": "AS11-36-5389",
+   "file": "AS11-36-5389.jpg",
+   "title": "Interior view of Apollo 11 Lunar Module showing displays and controls",
+   "date": "1969-07-20",
+   "bytes": 1547367,
+   "sha256": "564f7f09ad24c8d2a63aa0ba975580d2e19b8974da11e847cd6ac9552b47878d",
+   "source": "https://images.nasa.gov/details/as11-36-5389"
+  },
+  {
+   "id": "AS11-44-6584",
+   "file": "AS11-44-6584.jpg",
+   "title": "View of Lunar Module separation from the Command Module",
+   "date": "1969-07-20",
+   "bytes": 2071827,
+   "sha256": "e5a6e9e5b860fa44f2f5017ab23505f4d2990d8d23bfa67bafd0d85afe965aa8",
+   "source": "https://images.nasa.gov/details/as11-44-6584"
+  },
+  {
+   "id": "AS11-37-5448",
+   "file": "AS11-37-5448.jpg",
+   "title": "CSM over the Sea of Tranquility",
+   "date": "1969-07-20",
+   "bytes": 15733838,
+   "sha256": "76724119f1ebe5e0965e27b07897ac6225fc129cf413496557ece3543d521e06",
+   "source": "https://images.nasa.gov/details/as11-37-5448"
+  },
+  {
+   "id": "AS11-40-5899",
+   "file": "AS11-40-5899.jpg",
+   "title": "View of plaque Apollo 11 astronauts left on moon",
+   "date": "1969-07-20",
+   "bytes": 3800813,
+   "sha256": "7bdbca572339cf38c08f6cff2d7875508dc132b777fe06e5f68e4e25d5067319",
+   "source": "https://images.nasa.gov/details/as11-40-5899"
+  },
+  {
+   "id": "AS11-40-5917",
+   "file": "AS11-40-5917.jpg",
+   "title": "View of footpad of Apollo 11 Lunar Module as it rested on lunar surface",
+   "date": "1969-07-20",
+   "bytes": 2100156,
+   "sha256": "4b0189fcd84134890754ed28048f5fc0b5637f11ef4423691acbf90578a27bd9",
+   "source": "https://images.nasa.gov/details/as11-40-5917"
+  },
+  {
+   "id": "AS11-40-5927",
+   "file": "AS11-40-5927.jpg",
+   "title": "View Apollo 11 Lunar Module as it rested on lunar surface",
+   "date": "1969-07-20",
+   "bytes": 2599856,
+   "sha256": "cb240465a122bb9ab3531b315f40ae6297ae42250a17439c1cf63734418b95c4",
+   "source": "https://images.nasa.gov/details/as11-40-5927"
+  },
+  {
+   "id": "AS11-40-5878",
+   "file": "AS11-40-5878.jpg",
+   "title": "Close-up view of astronauts footprint in lunar soil",
+   "date": "1969-07-20",
+   "bytes": 1865259,
+   "sha256": "27dd6fbda54fedf594c179852cc56f6bae454e34abeaf6b3cdb0ce9aeacb1d3b",
+   "source": "https://images.nasa.gov/details/as11-40-5878"
+  },
+  {
+   "id": "AS11-40-5880",
+   "file": "AS11-40-5880.jpg",
+   "title": "Close-up view of astronauts foot and footprint in lunar soil",
+   "date": "1969-07-20",
+   "bytes": 1904951,
+   "sha256": "c4a9e1c135db28eb96f5f1e047a653e6ed0348c04fc1d763003b01d051c4dc09",
+   "source": "https://images.nasa.gov/details/as11-40-5880"
+  },
+  {
+   "id": "AS11-37-5545",
+   "file": "AS11-37-5545.jpg",
+   "title": "Flag of the U.S. deployed on surface of the Moon",
+   "date": "1969-07-20",
+   "bytes": 2813902,
+   "sha256": "3901d5e49a8afa151bbdbc38e9915482b51ba81715b3571b6edb4bc30af71840",
+   "source": "https://images.nasa.gov/details/as11-37-5545"
+  },
+  {
+   "id": "AS11-37-5505",
+   "file": "AS11-37-5505.jpg",
+   "title": "Shadow of the Apollo 11 Lunar module silhouetted against Moon's surface",
+   "date": "1969-07-20",
+   "bytes": 3889900,
+   "sha256": "e712fe8838b282c323e904dbe75c95a20007d05ae0e41d426522717bea41a3aa",
+   "source": "https://images.nasa.gov/details/as11-37-5505"
+  },
+  {
+   "id": "AS11-40-5881",
+   "file": "AS11-40-5881.jpg",
+   "title": "Lunar surface and horizon",
+   "date": "1969-07-20",
+   "bytes": 9945389,
+   "sha256": "444456294052797d2f9ac6cc5c449c88a95898548c222a2e3429e834f7c7b6ba",
+   "source": "https://images.nasa.gov/details/as11-40-5881"
+  },
+  {
+   "id": "AS11-45-6712",
+   "file": "AS11-45-6712.jpg",
+   "title": "Apollo 11 stereo view showing stone embedded in powdery lunar surface",
+   "date": "1969-07-20",
+   "bytes": 865056,
+   "sha256": "f312ea2291a89f58dbe6845ce81bb629f33d9e32bc814b32fade442302abaaaf",
+   "source": "https://images.nasa.gov/details/as11-45-6712"
+  },
+  {
+   "id": "AS11-40-5903",
+   "file": "AS11-40-5903.jpg",
+   "title": "Astronaut Edwin Aldrin walks on lunar surface near leg of Lunar Module",
+   "date": "1969-07-20",
+   "bytes": 3183792,
+   "sha256": "e34e716f1dd66040e9fd89454f3a390b11ecd9619321b963b0b7631dffe32021",
+   "source": "https://images.nasa.gov/details/as11-40-5903"
+  },
+  {
+   "id": "AS11-40-5875",
+   "file": "AS11-40-5875.jpg",
+   "title": "Astronaut Edwin Aldrin poses for photograph beside deployed U.S. flag",
+   "date": "1969-07-20",
+   "bytes": 2742699,
+   "sha256": "119ab3d6b26f85394bad802853824dfb5e0d86456b2b1357270764a6f8bbfd57",
+   "source": "https://images.nasa.gov/details/as11-40-5875"
+  },
+  {
+   "id": "AS11-40-5868",
+   "file": "AS11-40-5868.jpg",
+   "title": "Astronaut Edwin Aldrin descends steps of Lunar Module ladder to walk on moon",
+   "date": "1969-07-20",
+   "bytes": 2529663,
+   "sha256": "c9ff5d418a3d0e7d6976f60d426c9d147a2ff2d3894271143c2dbde247b978d0",
+   "source": "https://images.nasa.gov/details/as11-40-5868"
+  },
+  {
+   "id": "AS11-40-5948",
+   "file": "AS11-40-5948.jpg",
+   "title": "Astronaut Edwin Aldrin after deployment of EASEP on surface of moon",
+   "date": "1969-07-20",
+   "bytes": 4233240,
+   "sha256": "9156d706510a8d6d5471dbd087ee5251cfceb78af56442f3762481bfd9aa3567",
+   "source": "https://images.nasa.gov/details/as11-40-5948"
+  },
+  {
+   "id": "AS11-40-5964",
+   "file": "AS11-40-5964.jpg",
+   "title": "Astronaut Edwin Aldrin deploying Solar Wind Composition experiment",
+   "date": "1969-07-20",
+   "bytes": 3847875,
+   "sha256": "980d1b5f95872a0db047aa4d0b1248b37e90af14dd2f9bd84ab9134572edcbf1",
+   "source": "https://images.nasa.gov/details/as11-40-5964"
+  }
+ ]
+}

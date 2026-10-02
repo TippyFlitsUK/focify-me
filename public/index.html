@@ -28,10 +28,11 @@ a{color:var(--blue);text-decoration:none}
 a:hover{text-decoration:underline}
 :focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 .hidden{display:none}
+[hidden]{display:none!important}
 
 .bar{background:var(--panel);border-bottom:1px solid var(--rule)}
 .bar-in{max-width:var(--page);margin:0 auto;padding:16px var(--gutter);display:flex;justify-content:space-between;align-items:center;gap:16px 24px;flex-wrap:wrap}
-.bar img{display:block;height:68px;width:auto}
+.bar img{display:block;height:85px;width:auto}
 .nav{display:flex;gap:22px;flex-wrap:wrap;font:500 12px var(--mono);letter-spacing:.06em;text-transform:uppercase}
 .nav a{color:var(--ink);padding-bottom:3px;border-bottom:2px solid transparent}
 .nav a:hover,.nav a.active{color:var(--blue);border-bottom-color:var(--blue);text-decoration:none}
@@ -121,7 +122,7 @@ footer .links{display:flex;gap:22px;flex-wrap:wrap;text-transform:uppercase;lett
   .net-stats{grid-template-columns:repeat(2,1fr)}
   .net-stat:nth-child(2){border-right:0}
   .net-stat:nth-child(-n+2){border-bottom:1px solid var(--rule)}
-  .bar img{height:55px}
+  .bar img{height:69px}
   .result-card{padding:20px 16px}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -219,6 +220,7 @@ footer .links{display:flex;gap:22px;flex-wrap:wrap;text-transform:uppercase;lett
     <a href="/" class="active">Convert</a>
     <a href="/demos/">Demos</a>
     <a href="/explore/">Explore</a>
+    <a href="/archive/">Archive</a>
     <a href="/guides/">Guides</a>
     <a href="/about/">About</a>
   </nav>
