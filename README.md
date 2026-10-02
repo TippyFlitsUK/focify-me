@@ -102,7 +102,7 @@ pm2 env "$(pm2 id focify-me | tr -d '[] ')" | grep FOCIFY_
 
 ## Endpoints
 
-- `GET /` the converter page (`/demo/` is an alias); nginx serves `/demos/`, `/guides/`, `/about/`, `/explore/`, `/archive/`, `/agents/` and `/llms.txt` from `site/dist`
+- `GET /` the converter page (`/demo/` is an alias); nginx serves `/demos/`, `/guides/`, `/about/`, `/explore/`, `/archive/`, `/agents/`, `/timemachine/` and `/llms.txt` from `site/dist`
 - `POST /api/demo/start` `{ url }` or `{ file, originalName }`, returns `{ jobId }`
 - `GET /api/demo/stream/:jobId` SSE progress, reconnects via `Last-Event-ID`
 - `POST /api/upload` multipart archive upload (`.zip`, `.tar`, `.tar.gz`, `.tgz`, 500 MB max)

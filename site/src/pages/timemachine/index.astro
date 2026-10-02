@@ -1,0 +1,23 @@
+---
+import Base from "../../layouts/Base.astro";
+---
+<Base title="Time machine" section="timemachine" heading="Website time machine" tagline="Dated copies of a website, each stored on <span>Filecoin Onchain Cloud</span> and opened by its content address" description="Scheduled snapshots of websites stored on Filecoin Onchain Cloud, with a timeline to open any version and its storage proof status.">
+  <section class="focified-section explore">
+    <p class="subtitle">Each snapshot is a full static copy of the site made by the <a href="../">converter</a>, added as one more piece to that site's single data set. Move the slider to pick a date, then open that version exactly as it was.</p>
+    <p class="ex-message" id="empty" hidden>No snapshots have been stored yet.</p>
+    <p class="ex-message" id="error" hidden><strong>The timeline could not be loaded.</strong> The chain index did not answer. Try again in a minute.</p>
+    <div id="machine" hidden>
+      <div class="tm-sites" id="sites"></div>
+      <div class="panel tm">
+        <div class="tm-head"><span class="vlabel" id="pos"></span><span class="fig" id="range"></span></div>
+        <label class="sr" for="slider">Snapshot</label>
+        <input type="range" id="slider" min="0" max="0" step="1" value="0">
+        <div class="tm-ticks" id="ticks"></div>
+        <div class="fund" id="version"></div>
+      </div>
+      <p class="fig" id="note"></p>
+    </div>
+  </section>
+  <noscript><section class="focified-section"><p class="subtitle">This page needs JavaScript to read the snapshot list from the chain index.</p></section></noscript>
+  <script type="module" src="./app.js"></script>
+</Base>

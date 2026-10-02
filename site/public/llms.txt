@@ -10,6 +10,7 @@ Filecoin Onchain Cloud stores data with storage providers who must prove, on a s
 - [Demos](https://focify.me/demos/): working demos grouped by use case, each linked to where it lives and credited to its author, with the date it was last checked.
 - [Explore](https://focify.me/explore/): enter a payer address and see the data sets it pays for, their providers, sizes, status and funding. Read-only. Accepts ?network=mainnet|calibration&payer=0x...
 - [Fund this archive](https://focify.me/archive/): a public photograph collection with its proof status, a funded-until date and a donate button, on the calibration testnet.
+- [Time machine](https://focify.me/timemachine/): dated snapshots of websites stored on the calibration testnet, each opened by its content address.
 - [For agents](https://focify.me/agents/): skills, command-line tools, an MCP server, the SDK and copy-paste prompts.
 - [Guides](https://focify.me/guides/): short walkthroughs.
 - [About](https://focify.me/about/): who runs the site and how it is hosted.
