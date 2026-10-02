@@ -1,0 +1,44 @@
+---
+import Base from "../../layouts/Base.astro";
+---
+<Base title="Fund this archive" section="archive" heading="Fund this archive" tagline="28 photographs from Apollo 11, stored on <span>Filecoin Onchain Cloud</span> and paid for from an account that anyone can top up" description="A public collection stored on Filecoin Onchain Cloud with its proof status, its funding horizon and a way for anyone to extend it.">
+  <section class="net-strip" id="summary" hidden></section>
+
+  <section class="focified-section explore">
+    <h2>Funded until</h2>
+    <p class="subtitle">Storage here is paid for continuously from a Filecoin Pay account. While the account has money in it, the provider is paid and has to keep proving it holds the files.</p>
+    <div class="panel fund" id="funding"><p class="fine">Reading the account…</p></div>
+  </section>
+
+  <section class="focified-section explore">
+    <h2>Donate</h2>
+    <p class="subtitle">Anyone can add to the account that pays for this archive. A donation is a deposit into Filecoin Pay credited to that account; it cannot be sent anywhere else and you keep control of your own wallet throughout.</p>
+    <div class="panel donate">
+      <p class="fine">This is running on the Calibration testnet, so donations use test USDFC, which has no value. The archive's account is <span class="mono" id="account"></span>.</p>
+      <button class="focify-btn" id="connect" type="button">Connect a wallet</button>
+      <form class="ex-form" id="donate-form" hidden>
+        <label class="sr" for="amount">Amount in USDFC</label>
+        <input id="amount" type="text" inputmode="decimal" placeholder="Amount in USDFC, for example 1" autocomplete="off">
+        <button class="focify-btn" id="give" type="submit">Donate</button>
+      </form>
+      <div class="dstatus" id="donate-status" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section class="focified-section">
+    <h2>The photographs</h2>
+    <p class="subtitle">Each one is stored as its own piece. "Open from Filecoin" loads the full-size file by its content address through an IPFS gateway that finds it at the storage provider; the small pictures on this page are served by focify.me.</p>
+    <p class="subtitle" id="live-note" hidden>Live status is unavailable right now, so this shows the collection without it.</p>
+    <div class="focified-grid" id="items"></div>
+  </section>
+
+  <section class="focified-section explore">
+    <h2>Credits</h2>
+    <div class="prose" style="margin-top:0">
+      <p>The idea of a public collection with its own funding account and a Donate button comes from <a href="https://projectgutenberg.filecoincloud.eth.limo/">Project Gutenberg on Filecoin</a> by Jennifer Wang.</p>
+      <p>Photographs: NASA, Apollo 11, July 1969, from the <a href="https://images.nasa.gov/">NASA Image and Video Library</a>. NASA has not endorsed this page or this project.</p>
+    </div>
+  </section>
+  <noscript><section class="focified-section"><p class="subtitle">This page needs JavaScript to read the archive's status.</p></section></noscript>
+  <script type="module" src="./app.js"></script>
+</Base>
