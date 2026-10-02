@@ -5,6 +5,6 @@ import { defineConfig } from "astro/config";
 export default defineConfig({
   site: "https://focify.me",
   output: "static",
-  build: { format: "directory" },
+  build: { format: "directory", inlineStylesheets: "always" },
   trailingSlash: "always",
 });
