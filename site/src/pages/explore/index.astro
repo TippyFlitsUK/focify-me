@@ -1,0 +1,29 @@
+---
+import Base from "../../layouts/Base.astro";
+---
+<Base title="Explore" section="explore" heading="What have I stored?" tagline="Enter the wallet address that pays for storage and see every data set it has on <span>Filecoin Onchain Cloud</span>: where it is, how big, and whether it is healthy" description="Look up the data sets a wallet pays for on Filecoin Onchain Cloud. Read-only, no wallet connection needed.">
+  <section class="focified-section explore">
+    <form class="ex-form" id="lookup">
+      <label class="sr" for="network">Network</label>
+      <select id="network">
+        <option value="mainnet">Mainnet</option>
+        <option value="calibration">Calibration testnet</option>
+      </select>
+      <label class="sr" for="payer">Payer address</label>
+      <input id="payer" type="text" placeholder="0x address that pays for the storage" autocomplete="off" spellcheck="false">
+      <button class="focify-btn" id="go" type="submit">Look up</button>
+    </form>
+    <p class="fig">Read-only. No wallet connection and no private key. Example: <a href="?network=calibration&payer=0x12e83c954051b7c91f70d001f80dc9ff91737b83">the ChainVault demo on the calibration testnet</a>.</p>
+    <div class="ex-message" id="message" hidden></div>
+  </section>
+
+  <section class="net-strip" id="summary" hidden></section>
+
+  <div id="results" hidden>
+    <section class="focified-section explore" id="funding"></section>
+    <section class="focified-section explore" id="flags"></section>
+    <section class="focified-section explore" id="groups"></section>
+  </div>
+  <noscript><section class="focified-section"><p class="subtitle">This page needs JavaScript: it reads the chain index from your browser.</p></section></noscript>
+  <script type="module" src="./app.js"></script>
+</Base>
