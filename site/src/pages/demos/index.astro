@@ -20,7 +20,7 @@ const network = demos.filter((d) => d.data.category === "network");
     <p class="subtitle">Nothing is rehosted. The date is the last day someone confirmed it working.</p>
     {groups.map((g) => (
       <>
-        <h2 class="group" id={g.id}>{g.title}</h2>
+        <h2 id={g.id}>{g.title}</h2>
         <p class="subtitle">{g.blurb}</p>
         <div class="focified-grid">
           {g.demos.map((d) => <DemoCard demo={d} href={`./${d.id}/`} />)}
@@ -32,7 +32,7 @@ const network = demos.filter((d) => d.data.category === "network");
 
   {network.length > 0 && (
     <section class="focified-section">
-      <h2 class="group" id="network">Network health</h2>
+      <h2 id="network">Network health</h2>
       <p class="subtitle">For storage providers and the people who watch them, rather than for customers</p>
       <div class="focified-grid">
         {network.map((d) => <DemoCard demo={d} href={`./${d.id}/`} />)}
