@@ -1,0 +1,83 @@
+---
+import Base from "../../layouts/Base.astro";
+import DemoCard from "../../components/DemoCard.astro";
+import { getCollection } from "astro:content";
+const agentBuilt = ["ipfs2filecoin", "filecoin-skills", "project-gutenberg", "foc-cade"];
+const all = await getCollection("demos");
+const demos = agentBuilt.map((id) => all.find((d) => d.id === id)).filter(Boolean);
+const tools = [
+  { name: "Filecoin skills", by: "filecoin-project", what: "Skills an agent loads to publish a file or folder and hand back a link that works. Mainnet only.", install: "npx skills add filecoin-project/filecoin-skills --skill publish", url: "https://github.com/filecoin-project/filecoin-skills" },
+  { name: "FOC CLI", by: "FIL-Builders", what: "A command line an agent can drive: wallets, uploads, downloads, data sets and providers. Uses the calibration testnet unless told otherwise, and also ships as agent skills.", install: "npx skills add FIL-Builders/foc-cli", url: "https://github.com/FIL-Builders/foc-cli" },
+  { name: "FOC Storage MCP server", by: "FIL-Builders", what: "Storage as tools inside any assistant that speaks the Model Context Protocol: upload, organise data sets, estimate costs and pay.", install: "npx -y @fil-b/foc-storage-mcp", url: "https://github.com/FIL-Builders/foc-storage-mcp" },
+  { name: "Synapse SDK", by: "FilOzone", what: "The JavaScript library underneath all of the above, for when the agent is writing an application and not just storing a file.", install: "npm install @filoz/synapse-sdk", url: "https://docs.filecoin.cloud/developer-guides/synapse/" },
+];
+const prompts = [
+  { id: "publish", title: "Publish a folder", note: "Uses the official publish skill, which writes to mainnet and needs a funded wallet. Tested as far as the cost preview; the agent then waits for your yes.", text: `Publish the folder ./my-folder to Filecoin Onchain Cloud and give me a link I can share. This is mainnet and uses real funds.
+1. Install the official publish skill into this project (needs Node 24 or newer): npx skills add filecoin-project/filecoin-skills --skill publish
+2. Read the installed skill's SKILL.md and follow it. If it needs me to log in or add funds, stop and tell me exactly what to do.
+3. I am asking for a cost preview before any real upload: run the dry run with the same options the real publish will use. Tell me the deposit needed now, the one-time fees and the monthly storage rate, and list the files that will become public.
+4. Do not publish or move any funds until I say yes.
+5. After I say yes: publish, wait until the link is confirmed working, and give me the link.` },
+  { id: "read", title: "Read data back and check it", note: "Needs no wallet and costs nothing. Swap in any CID; this one is a photograph from the archive on this site. Tested end to end.", text: `Read a file back from Filecoin Onchain Cloud and check it. The file's IPFS CID is bafybeiapnvjfxw2w7556sb7ixrhhy26nk6p36tmuh27hkysaqiw4kpr7my.
+1. Ask the public index which storage providers hold it: GET https://cid.contact/cid/<CID>. Provider addresses are under MultihashResults[].ProviderResults[].Provider.Addrs and look like /dns/HOST/tcp/443/https, which means https://HOST.
+2. Download it from one of those providers as a CAR file: GET https://HOST/ipfs/<CID> with the header "Accept: application/vnd.ipld.car". If one provider fails, try the next.
+3. Check that every block in the CAR hashes to its own CID and that the CAR's root is the CID I gave you. Then unpack the file from the CAR (it is UnixFS; a tool such as ipfs-car or ipfs-unixfs-exporter does this).
+4. Tell me the unpacked file's type, its size in bytes and its SHA-256.` },
+];
+---
+<Base title="Agents" section="agents" heading="For agents" tagline="Everything an AI agent needs to store data on <span>Filecoin Onchain Cloud</span> and read it back, in one place" description="Skills, command-line tools, an MCP server, the SDK and copy-paste prompts for AI agents working with Filecoin Onchain Cloud.">
+  <section class="focified-section">
+    <h2>Copy a prompt</h2>
+    <p class="subtitle">Paste one into Claude Code, Cursor, Codex or any coding agent. Each was run through an agent before it was put here; the note under each says how far.</p>
+    <div class="prompts">
+      {prompts.map((p) => (
+        <div class="prompt">
+          <div class="prompt-head"><strong>{p.title}</strong><button class="copy-btn" data-copy={p.id} type="button">Copy</button></div>
+          <pre id={`prompt-${p.id}`}>{p.text}</pre>
+          <p class="fig">{p.note}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="focified-section">
+    <h2>Tools</h2>
+    <p class="subtitle">Made by the teams named on each. focify.me only points at them.</p>
+    <div class="focified-grid two">
+      {tools.map((t) => (
+        <div class="focified-card"><a href={t.url} target="_blank">
+          <div class="focified-info">
+            <div class="focified-name">{t.name}</div>
+            <div class="focified-summary">{t.what}</div>
+            <code class="install">{t.install}</code>
+            <div class="focified-stats"><div class="focified-stat"><span class="label">From</span><span class="value">{t.by}</span></div></div>
+          </div>
+        </a></div>
+      ))}
+    </div>
+  </section>
+
+  <section class="focified-section">
+    <h2>Built by or for agents</h2>
+    <p class="subtitle">Demos where an agent did the work, or where an agent is the intended user</p>
+    <div class="focified-grid">
+      {demos.map((d) => <DemoCard demo={d} href={`../demos/${d.id}/`} />)}
+    </div>
+  </section>
+
+  <section class="focified-section explore">
+    <h2>Read the docs like a machine</h2>
+    <div class="prose" style="margin-top:0">
+      <p>The official documentation publishes a plain-text index for language models at <a href="https://docs.filecoin.cloud/llms.txt">docs.filecoin.cloud/llms.txt</a>. This site has its own, describing what is here: <a href="../llms.txt">focify.me/llms.txt</a>.</p>
+    </div>
+  </section>
+  <script is:inline>
+    document.querySelectorAll("[data-copy]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var text = document.getElementById("prompt-" + b.getAttribute("data-copy")).textContent;
+        var done = function () { b.textContent = "Copied"; setTimeout(function () { b.textContent = "Copy"; }, 1500); };
+        if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {});
+      });
+    });
+  </script>
+</Base>
