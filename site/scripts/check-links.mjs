@@ -61,7 +61,7 @@ if (checkExternal) {
         const controller = new AbortController();
         const t = setTimeout(() => controller.abort(), 15000);
         let res = await fetch(url, { method: "HEAD", redirect: "follow", signal: controller.signal });
-        if (res.status === 405 || res.status === 403) {
+        if (res.status === 405 || res.status === 403 || res.status === 429 || res.status >= 500) {
           res = await fetch(url, { method: "GET", redirect: "follow", signal: controller.signal });
         }
         clearTimeout(t);
@@ -72,8 +72,8 @@ if (checkExternal) {
         failure = err.name === "AbortError" ? "timeout" : err.message;
         retry = true;
       }
-      if (!retry || attempt === 3) return `${url} -> ${failure} (on ${external.get(url).join(", ")})`;
-      await new Promise((r) => setTimeout(r, attempt * 3000));
+      if (!retry || attempt === 5) return `${url} -> ${failure} (on ${external.get(url).join(", ")})`;
+      await new Promise((r) => setTimeout(r, attempt * 5000));
     }
   };
   const byHost = new Map();
