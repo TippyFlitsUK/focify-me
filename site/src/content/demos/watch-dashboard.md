@@ -6,6 +6,7 @@ owner: James Bluett
 stack: [Node, PDP, Filecoin Pay]
 status: live
 verified: 2026-09-24
+category: network
 order: 4
 ---
 

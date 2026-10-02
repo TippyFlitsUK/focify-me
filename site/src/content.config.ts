@@ -15,6 +15,7 @@ const demos = defineCollection({
     stack: z.array(z.string()).default([]),
     status: z.enum(["live", "unverified", "retired"]).default("unverified"),
     verified: day.optional(), // YYYY-MM-DD, the last day someone saw it working
+    category: z.enum(["archives", "websites", "agents", "compute", "starters", "network"]),
     order: z.number().default(100),
   }),
 });

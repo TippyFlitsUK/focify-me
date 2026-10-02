@@ -7,6 +7,7 @@ owner: James Bluett
 stack: [Playwright, filecoin-pin, Filecoin Onchain Cloud, calibnet]
 status: live
 verified: 2026-09-30
+category: websites
 order: 1
 ---
 

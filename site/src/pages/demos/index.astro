@@ -1,14 +1,42 @@
 ---
 import Base from "../../layouts/Base.astro";
 import DemoCard from "../../components/DemoCard.astro";
+import NetworkStrip from "../../components/NetworkStrip.astro";
 import { getCollection } from "astro:content";
 const demos = (await getCollection("demos")).sort((a, b) => a.data.order - b.data.order);
+const useCases = [
+  { id: "archives", title: "Archives and proof", blurb: "Data kept on storage providers that prove, on a schedule, they still hold it" },
+  { id: "websites", title: "Websites", blurb: "Sites and apps served straight from Filecoin Onchain Cloud" },
+  { id: "agents", title: "Agents", blurb: "Things an AI agent can do with storage, start to finish" },
+  { id: "compute", title: "Compute", blurb: "Running work next to the data" },
+  { id: "starters", title: "Developer starters", blurb: "Working apps to try, read and fork" },
+];
+const groups = useCases.map((c) => ({ ...c, demos: demos.filter((d) => d.data.category === c.id) })).filter((g) => g.demos.length > 0);
+const network = demos.filter((d) => d.data.category === "network");
 ---
 <Base title="Demos" section="demos" heading="Demos" tagline="Every demo listed here links to where it lives on <span>Filecoin Onchain Cloud</span>">
+  <NetworkStrip />
   <section class="focified-section">
     <p class="subtitle">Nothing is rehosted. The date is the last day someone confirmed it working.</p>
-    <div class="focified-grid">
-      {demos.map((d) => <DemoCard demo={d} href={`./${d.id}/`} />)}
-    </div>
+    {groups.map((g) => (
+      <>
+        <h2 class="group" id={g.id}>{g.title}</h2>
+        <p class="subtitle">{g.blurb}</p>
+        <div class="focified-grid">
+          {g.demos.map((d) => <DemoCard demo={d} href={`./${d.id}/`} />)}
+        </div>
+      </>
+    ))}
+    <p class="more">More projects are listed on the official <a href="https://filecoin.cloud/showcase" target="_blank">Filecoin Onchain Cloud showcase</a>.</p>
   </section>
+
+  {network.length > 0 && (
+    <section class="focified-section">
+      <h2 class="group" id="network">Network health</h2>
+      <p class="subtitle">For storage providers and the people who watch them, rather than for customers</p>
+      <div class="focified-grid">
+        {network.map((d) => <DemoCard demo={d} href={`./${d.id}/`} />)}
+      </div>
+    </section>
+  )}
 </Base>

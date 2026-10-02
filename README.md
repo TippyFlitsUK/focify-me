@@ -12,7 +12,9 @@ the Filecoin Foundation or Protocol Labs.
 - **The converter** (`server.js`, `public/`): focify.me itself, served at `/`
   with its API under `/api/`.
 - **The gallery** (`site/`): static Astro pages for `/demos/`, `/guides/` and
-  `/about/`, listing demos built on Filecoin Onchain Cloud and short guides.
+  `/about/`, listing demos built on Filecoin Onchain Cloud and short guides. Each demo
+  entry has a `category` (see `site/src/content.config.ts`) that decides its
+  section on `/demos/`.
   `.github/workflows/site.yml` builds and link-checks them and can pin the
   build to FOC when the publish secrets are set.
 

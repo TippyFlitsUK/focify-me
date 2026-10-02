@@ -6,6 +6,7 @@ owner: Jennifer Wang
 stack: [filecoin-pin, Filecoin Cloud console, session keys]
 status: live
 verified: 2026-09-22
+category: agents
 order: 6
 ---
 
