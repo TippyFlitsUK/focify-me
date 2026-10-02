@@ -53,8 +53,10 @@ for (const file of htmlFiles) {
 
 let externalFailures = [];
 if (checkExternal) {
-  const results = await Promise.all(
-    [...external.keys()].map(async (url) => {
+  const check = async (url) => {
+    for (let attempt = 1; ; attempt++) {
+      let failure;
+      let retry = false;
       try {
         const controller = new AbortController();
         const t = setTimeout(() => controller.abort(), 15000);
@@ -63,12 +65,32 @@ if (checkExternal) {
           res = await fetch(url, { method: "GET", redirect: "follow", signal: controller.signal });
         }
         clearTimeout(t);
-        return res.ok ? null : `${url} -> HTTP ${res.status} (on ${external.get(url).join(", ")})`;
+        if (res.ok) return null;
+        failure = `HTTP ${res.status}`;
+        retry = res.status === 429 || res.status >= 500;
       } catch (err) {
-        return `${url} -> ${err.name === "AbortError" ? "timeout" : err.message} (on ${external.get(url).join(", ")})`;
+        failure = err.name === "AbortError" ? "timeout" : err.message;
+        retry = true;
       }
-    }),
-  );
+      if (!retry || attempt === 3) return `${url} -> ${failure} (on ${external.get(url).join(", ")})`;
+      await new Promise((r) => setTimeout(r, attempt * 3000));
+    }
+  };
+  const byHost = new Map();
+  for (const url of external.keys()) {
+    const host = new URL(url).host;
+    if (!byHost.has(host)) byHost.set(host, []);
+    byHost.get(host).push(url);
+  }
+  const results = (
+    await Promise.all(
+      [...byHost.values()].map(async (urls) => {
+        const out = [];
+        for (const url of urls) out.push(await check(url));
+        return out;
+      }),
+    )
+  ).flat();
   externalFailures = results.filter(Boolean);
 }
 
