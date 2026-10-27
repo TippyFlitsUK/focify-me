@@ -91,7 +91,7 @@ function run(args, env = {}) {
   return new Promise((resolve) => {
     const child = spawn(process.execPath, [cli, ...args], {
       stdio: ["ignore", "pipe", "pipe"],
-      env: { ...process.env, FORCE_COLOR: "0", FOCIFY_PROXY: "", ...env },
+      env: { ...process.env, FORCE_COLOR: "0", FOCIFY_PROXY: "", FOCIFY_ALLOW_PRIVATE_NETWORK: "1", ...env },
     });
     let stdout = "";
     let stderr = "";

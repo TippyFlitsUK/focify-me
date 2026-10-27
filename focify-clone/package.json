@@ -19,7 +19,7 @@
   "scripts": {
     "build": "tsc && chmod +x dist/cli.js",
     "lint": "tsc --noEmit",
-    "test": "node test/smoke.mjs",
+    "test": "node test/netguard.mjs && node test/smoke.mjs",
     "prepare": "npm run build"
   },
   "dependencies": {

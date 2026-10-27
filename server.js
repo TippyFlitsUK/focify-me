@@ -9,8 +9,10 @@ import { tmpdir } from "node:os";
 import { join, extname, resolve } from "node:path";
 import { createInterface } from "node:readline";
 import { randomUUID } from "node:crypto";
+import { assertPublicUrl } from "./focify-clone/dist/netguard.js";
 
 const PORT = process.env.PORT || 8090;
+const HOST = process.env.HOST || "127.0.0.1";
 const app = express();
 const execFileAsync = promisify(execFile);
 
@@ -336,7 +338,7 @@ async function extractArchive(archivePath, originalName) {
 }
 
 // ── Start a job ──
-app.post("/api/demo/start", (req, res) => {
+app.post("/api/demo/start", async (req, res) => {
   const url = req.body.url;
   const filePath = req.body.file;
   const input = url || filePath;
@@ -346,19 +348,19 @@ app.post("/api/demo/start", (req, res) => {
     return;
   }
 
-  if (activeJobs >= MAX_JOBS) {
-    res.status(503).json({ error: "Server busy -- too many concurrent jobs. Try again in a minute." });
-    return;
-  }
-
   if (url) {
     try {
       const normalized = url.startsWith("http") ? url : `https://${url}`;
-      new URL(normalized);
+      await assertPublicUrl(normalized);
     } catch {
-      res.status(400).json({ error: "Invalid URL" });
+      res.status(400).json({ error: "Invalid URL: only public http(s) websites can be converted" });
       return;
     }
+  }
+
+  if (activeJobs >= MAX_JOBS) {
+    res.status(503).json({ error: "Server busy -- too many concurrent jobs. Try again in a minute." });
+    return;
   }
 
   // Validate uploaded file path -- must be in the uploads temp dir
@@ -579,8 +581,8 @@ app.use((err, _req, res, _next) => {
   }
 });
 
-const server = app.listen(PORT, () => {
-  console.log(`FOCify.ME server running on port ${PORT}`);
+const server = app.listen(PORT, HOST, () => {
+  console.log(`FOCify.ME server running on ${HOST}:${PORT}`);
 });
 
 // Graceful shutdown: stop accepting new connections, wait for in-flight jobs to finish
