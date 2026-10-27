@@ -2,6 +2,7 @@ import { mkdirSync, writeFileSync, existsSync, readFileSync, readdirSync, statSy
 import { join, dirname, extname } from "node:path";
 import { URL } from "node:url";
 import { step, success, info, c } from "./ui.js";
+import { assertPublicUrl, guardedFetch, startGuardProxy } from "./netguard.js";
 
 const SAFARI_UA = "Mozilla/5.0 (iPad; CPU OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1";
 
@@ -384,6 +385,7 @@ export async function clone(config: CloneConfig): Promise<CloneResult> {
         "  Then install browsers: npx playwright install chromium"
     );
   }
+  await assertPublicUrl(config.url);
   let maxPages = config.maxPages === 0 ? Infinity : (config.maxPages ?? 50);
   const takeScreenshots = config.screenshots === true;
 
@@ -414,8 +416,7 @@ export async function clone(config: CloneConfig): Promise<CloneResult> {
   {
     let challenged = false;
     try {
-      const resp = await fetch(config.url, {
-        redirect: "follow",
+      const resp = await guardedFetch(config.url, {
         headers: {
           "user-agent":
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -452,11 +453,15 @@ export async function clone(config: CloneConfig): Promise<CloneResult> {
     }
   }
 
+  const guardProxy = proxyOption ? undefined : await startGuardProxy();
   const browser = await playwright.chromium.launch({
     headless: true,
     args: ["--disable-blink-features=AutomationControlled"],
-    ...(proxyOption ? { proxy: proxyOption } : {}),
+    proxy: proxyOption ?? { server: guardProxy!.server },
     ...(process.env.FOCIFY_CHROMIUM_PATH ? { executablePath: process.env.FOCIFY_CHROMIUM_PATH } : {}),
+  }).catch(async (err) => {
+    await guardProxy?.close();
+    throw err;
   });
   try {
   const context = await browser.newContext({
@@ -1513,6 +1518,8 @@ export async function clone(config: CloneConfig): Promise<CloneResult> {
   } catch (err) {
     await browser.close().catch(() => {});
     throw err;
+  } finally {
+    await guardProxy?.close();
   }
 
   success("Clone complete");
